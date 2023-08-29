@@ -1,0 +1,47 @@
+2023-08-28 14:41:20,582 - chaserner.utils.logger - INFO - 
+    Finished simulation.  Generated:
+    TRAIN: 1344
+    DEV: 1344
+    TEST: 1344
+    
+2023-08-28 14:41:21,481 - chaserner.utils.logger - INFO - 1344 1344 1344
+2023-08-28 14:41:25,465 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 14:41:26,115 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 14:41:26,660 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 14:41:27,199 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 14:41:27,739 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 14:41:28,277 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 14:41:28,819 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 14:41:57,641 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 14:41:58,234 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 14:41:58,778 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 14:41:59,320 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 14:41:59,858 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 14:42:00,402 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 14:42:00,944 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 14:42:01,486 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 14:42:02,031 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 14:42:02,575 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 14:42:03,121 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:04:24,093 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:04:24,701 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:04:25,235 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:04:25,777 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:04:26,316 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:04:26,846 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:04:27,389 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:04:27,926 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:04:28,470 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:04:29,012 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:04:29,557 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:12:36,921 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:12:37,567 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:12:38,117 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:12:38,659 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:12:39,200 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:12:39,745 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:12:40,292 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:12:40,837 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:12:41,379 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:12:41,939 - chaserner.utils.logger - INFO - Model mode after validation: evaluation
+2023-08-28 15:12:42,479 - chaserner.utils.logger - INFO - Model mode after validation: evaluation

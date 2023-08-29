@@ -1,0 +1,14 @@
+2023-08-28 09:12:21,324 - chaserner.utils.logger - INFO - 
+    Finished simulation.  Generated:
+    TRAIN: 21504
+    DEV: 5760
+    TEST: 5760
+    
+2023-08-28 09:12:22,269 - chaserner.utils.logger - INFO - 21504 5760 5760
+2023-08-28 09:14:27,545 - chaserner.utils.logger - INFO - 
+    Finished simulation.  Generated:
+    TRAIN: 21504
+    DEV: 5760
+    TEST: 5760
+    
+2023-08-28 09:14:28,442 - chaserner.utils.logger - INFO - 21504 5760 5760

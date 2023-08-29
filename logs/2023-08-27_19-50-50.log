@@ -1,0 +1,22 @@
+2023-08-27 19:50:52,024 - chaserner.utils.logger - INFO - 
+    Finished simulation.  Generated:
+    TRAIN: 360
+    DEV: 360
+    TEST: 1344
+    
+2023-08-27 19:50:53,008 - chaserner.utils.logger - INFO - 360 360 1344
+2023-08-27 19:50:53,801 - chaserner.utils.logger - INFO - 
+    Finished simulation.  Generated:
+    TRAIN: 360
+    DEV: 360
+    TEST: 1344
+    
+2023-08-27 19:50:54,606 - chaserner.utils.logger - INFO - 360 360 1344
+2023-08-27 19:51:26,000 - chaserner.utils.logger - INFO - Creating DataLoader with batch size: 128
+2023-08-27 20:06:53,062 - chaserner.utils.logger - INFO - 
+    Finished simulation.  Generated:
+    TRAIN: 360
+    DEV: 360
+    TEST: 1344
+    
+2023-08-27 20:06:54,067 - chaserner.utils.logger - INFO - 360 360 1344

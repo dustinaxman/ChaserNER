@@ -1,0 +1,7 @@
+2023-08-28 15:14:49,334 - chaserner.utils.logger - INFO - 
+    Finished simulation.  Generated:
+    TRAIN: 1344
+    DEV: 1344
+    TEST: 1344
+    
+2023-08-28 15:14:50,353 - chaserner.utils.logger - INFO - 1344 1344 1344
