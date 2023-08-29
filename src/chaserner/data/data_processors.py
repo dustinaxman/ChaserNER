@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from chaserner.utils.logger import logger
 import multiprocessing
 
-NUM_WORKERS = 1#multiprocessing.cpu_count()
+NUM_WORKERS = 0#multiprocessing.cpu_count()
 
 
 class NERDataset(Dataset):

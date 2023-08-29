@@ -102,11 +102,11 @@ class NERModel(pl.LightningModule):
         self.train_batch_count += 1
         return loss
 
-    def training_epoch_end(self, outputs):
+    def on_train_epoch_end(self):
         # Compute the average training loss
         avg_train_loss = self.train_epoch_loss / self.train_batch_count
         # Log the average training loss
-        self.log('avg_train_loss', avg_train_loss, prog_bar=True)
+        self.log('avg_train_loss', avg_train_loss, on_step=False, on_epoch=True, prog_bar=True)
         # Reset the accumulation variables for the next epoch
         self.train_epoch_loss = 0.0
         self.train_batch_count = 0
@@ -115,9 +115,6 @@ class NERModel(pl.LightningModule):
     #     avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
     #     self.log('avg_val_loss', avg_loss)
     #     return {'avg_val_loss': avg_loss}
-
-    def on_validation_end(self):
-        print("Model mode after validation:", "training" if self.training else "evaluation")
 
     def on_validation_start(self):
         self.eval()
@@ -130,39 +127,7 @@ class NERModel(pl.LightningModule):
         self.eval()  # Set the model to training mode
         self.test_outputs = []
 
-    def validation_step(self, batch, batch_idx):
-        input_ids = batch['input_ids']
-        attention_mask = batch['attention_mask']
-        labels = batch['labels']
-        outputs = self(input_ids, attention_mask, labels)
-        val_loss = outputs.loss
-        self.val_outputs.append({"val_loss": val_loss})
-        # jsonl_data = batch_to_jsonl(batch, outputs, tokenizer, ids2lbl)
-        # with open(Path('~/Downloads/output_validate.jsonl'), 'a') as f:
-        #     for line in jsonl_data:
-        #         f.write(line + '\n')
-
-    def on_validation_epoch_end(self):
-        avg_loss = torch.stack([x['val_loss'] for x in self.val_outputs]).mean()
-        self.log('avg_val_loss', avg_loss)
-        return {'avg_val_loss': avg_loss}
-
-    # def proc_batch_to_lbl_gt_loss(self, batch):
-    #     input_ids = batch['input_ids']
-    #     attention_mask = batch['attention_mask']
-    #     raw_labels = batch['labels']
-    #     offset_mapping = batch['offset_mapping']
-    #     outputs = self(input_ids, attention_mask, raw_labels)
-    #     loss = outputs.loss
-    #     logits = outputs.logits
-    #     all_predicted_classes = torch.argmax(logits, dim=-1)
-    #     offset_mapping = offset_mapping.squeeze(1)
-    #     mask = (offset_mapping[:, :, 0] == 0) & (offset_mapping[:, :, 1] != 0)
-    #     labels_regrouped = [raw_labels[i][mask[i]] for i in range(mask.size(0))]
-    #     hyps_regrouped = [all_predicted_classes[i][mask[i]] for i in range(mask.size(0))]
-    #     return loss, labels_regrouped, hyps_regrouped
-
-    def test_step(self, batch, batch_idx):
+    def proc_batch_to_lbl_gt_loss(self, batch):
         input_ids = batch['input_ids']
         attention_mask = batch['attention_mask']
         raw_labels = batch['labels']
@@ -175,32 +140,53 @@ class NERModel(pl.LightningModule):
         mask = (offset_mapping[:, :, 0] == 0) & (offset_mapping[:, :, 1] != 0)
         labels_regrouped = [raw_labels[i][mask[i]] for i in range(mask.size(0))]
         hyps_regrouped = [all_predicted_classes[i][mask[i]] for i in range(mask.size(0))]
-        self.test_outputs.append({"test_loss": loss, "labels": labels_regrouped, "hypotheses": hyps_regrouped})
         # jsonl_data = batch_to_jsonl(batch, outputs, tokenizer, ids2lbl)
         # # Save the jsonl_data to a file (if needed)
         # with open(Path('~/Downloads/output_test.jsonl'), 'a') as f:
         #     for line in jsonl_data:
         #         f.write(line + '\n')
+        return loss, labels_regrouped, hyps_regrouped
 
-    def on_test_epoch_end(self):
-        avg_loss = torch.stack([x['test_loss'] for x in self.test_outputs]).mean()
-        unrolled_lbls = [sample for batch in self.test_outputs for sample in batch['labels']]
-        unrolled_hyps = [sample for batch in self.test_outputs for sample in batch['hypotheses']]
+    def proc_loss_lbls_hyps_get_metrics(self, loss_lbl_hyps):
+        avg_loss = torch.stack([x['test_loss'] for x in loss_lbl_hyps]).mean()
+        unrolled_lbls = [sample for batch in loss_lbl_hyps for sample in batch['labels']]
+        unrolled_hyps = [sample for batch in loss_lbl_hyps for sample in batch['hypotheses']]
         seqeval_results = seqeval_metric.compute(predictions=unrolled_hyps, references=unrolled_lbls)
         metrics = {
             "precision": seqeval_results["overall_precision"],
             "recall": seqeval_results["overall_recall"],
             "f1": seqeval_results["overall_f1"],
             "accuracy": seqeval_results["overall_accuracy"],
-            'avg_test_loss': avg_loss,
+            'avg_loss': avg_loss,
             "num_samples": len(unrolled_lbls)
         }
+        return metrics
+
+    def validation_step(self, batch, batch_idx):
+        loss, labels_regrouped, hyps_regrouped = self.proc_batch_to_lbl_gt_loss(batch)
+        self.val_outputs.append({"test_loss": loss, "labels": labels_regrouped, "hypotheses": hyps_regrouped})
+
+    def on_validation_epoch_end(self):
+        metrics = self.proc_loss_lbls_hyps_get_metrics(self.val_outputs)
         for metric_name, metric_val in metrics.items():
             if isinstance(metric_val, torch.Tensor):
                 metric_val = metric_val.float()  # Ensure it's float32
             else:
                 metric_val = torch.tensor(metric_val, dtype=torch.float32, device=self.device)
-            self.log(metric_name, metric_val)
+            self.log("val_"+metric_name, metric_val, on_step=False, on_epoch=True, prog_bar=True)
+
+    def test_step(self, batch, batch_idx):
+        loss, labels_regrouped, hyps_regrouped = self.proc_batch_to_lbl_gt_loss(batch)
+        self.test_outputs.append({"test_loss": loss, "labels": labels_regrouped, "hypotheses": hyps_regrouped})
+
+    def on_test_epoch_end(self):
+        metrics = self.proc_loss_lbls_hyps_get_metrics(self.test_outputs)
+        for metric_name, metric_val in metrics.items():
+            if isinstance(metric_val, torch.Tensor):
+                metric_val = metric_val.float()  # Ensure it's float32
+            else:
+                metric_val = torch.tensor(metric_val, dtype=torch.float32, device=self.device)
+            self.log("test_"+metric_name, metric_val)
 
     def freeze_encoder_layers(self, num_layers_to_freeze=6):
         """

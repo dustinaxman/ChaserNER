@@ -1,6 +1,6 @@
 SEED = 42
 
-TRAIN_DEV_TEST_SPLIT = (0.4, 0.3, 0.3,)
+TRAIN_DEV_TEST_SPLIT = (0.3, 0.3, 0.4,)
 
 
 TEMPLATES = [
