@@ -1,12 +1,15 @@
 from datasets import load_dataset
 import torch
 import json
+import random
+from pathlib import Path
 from torch.utils.data import Dataset
 from transformers import BertTokenizerFast
 from chaserner.data.simulator import simulate_train_dev_test
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
 from chaserner.utils.logger import logger
+from chaserner.utils import batch_to_jsonl
 import multiprocessing
 
 NUM_WORKERS = 0#multiprocessing.cpu_count()
@@ -18,6 +21,7 @@ class NERDataset(Dataset):
         self.label_to_id = label_to_id
         self.tokenizer = BertTokenizerFast.from_pretrained(tokenizer_name)
         self.max_length = max_length
+        self.all_data_jsonls = []
 
     def __len__(self):
         return len(self.data)
@@ -54,6 +58,16 @@ class NERDataset(Dataset):
         else:
             token_labels = [-100] * self.max_length
 
+        batch = {
+            'input_ids': tokenized_data['input_ids'],
+            'attention_mask': tokenized_data['attention_mask'],
+            'labels': torch.tensor(token_labels, dtype=torch.long).unsqueeze(0),
+            'offset_mapping': tokenized_data['offset_mapping']
+        }
+
+        jsonl_data = batch_to_jsonl(batch, self.tokenizer, {v: k for k, v in self.label_to_id.items()})
+        self.all_data_jsonls.extend(jsonl_data)
+        # Save the jsonl_data to a file (if needed)
         return {
             'input_ids': tokenized_data['input_ids'].squeeze(),
             'attention_mask': tokenized_data['attention_mask'].squeeze(),
@@ -72,9 +86,25 @@ class SimulatorNERDataModule(LightningDataModule):
         # Loading data
         train, dev, test = simulate_train_dev_test()
 
+        all_data = train + dev + test
+
+        random.shuffle(all_data)
+
+        def proc_dict(dict_val):
+            return " | ".join([k+":"+v for k, v in dict_val.items()])
+
+        with open("/Users/deaxman/Downloads/simulated_data.txt", "w") as f:
+            #f.write("\n".join(["\t".join([" ".join([txt+"|"+lbl for txt, lbl in zip(txt_input.split(), raw_labels)]), proc_dict(labels)]) for txt_input, labels, raw_labels in all_data]))
+            f.write("\n".join(["\t".join(
+                [txt_input, proc_dict(labels), " ".join(raw_labels)]) for
+                               txt_input, labels, raw_labels in all_data]))
+
         all_labels = [label for _, _, sample_labels in train for label in sample_labels]
         unique_labels = set(all_labels)
         self.label_to_id = {label: i for i, label in enumerate(unique_labels)}
+        # self.label_to_id["[SEP]"] = len(self.label_to_id)
+        # self.label_to_id["[CLS]"] = len(self.label_to_id)
+        #self.label_to_id["-100"] = -100  # Typically, this label is used to ignore tokens.
 
         config = {}
         config["lbl2ids"] = self.label_to_id
@@ -83,11 +113,14 @@ class SimulatorNERDataModule(LightningDataModule):
         with open(config_path, "w") as f:
             json.dump(config, f)
 
-        # TODO save label to id
-
         # Creating datasets
         self.train_dataset = NERDataset(train, self.label_to_id, tokenizer_name=self.tokenizer_name,
                                         max_length=self.max_length)
+
+        for sample in self.train_dataset:
+            pass
+        with open(Path.home()/'Downloads/output_test.jsonl', 'w') as f:
+            f.write('\n'.join(self.train_dataset.all_data_jsonls))
         self.val_dataset = NERDataset(dev, self.label_to_id, tokenizer_name=self.tokenizer_name,
                                       max_length=self.max_length)
         self.test_dataset = NERDataset(test, self.label_to_id, tokenizer_name=self.tokenizer_name,

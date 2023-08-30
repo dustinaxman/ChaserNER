@@ -39,10 +39,10 @@ ner_data_module = SimulatorNERDataModule(batch_size=128, tokenizer_name='SpanBER
 
 ner_data_module.setup('fit')
 
-num_labels = len(ner_data_module.label_to_id)
+num_labels = len([k for k in ner_data_module.label_to_id.keys() if k not in []])
 
 #model = DummyNERModel(num_labels=num_labels)
-model = NERModel(num_labels=num_labels, learning_rate=2e-5, frozen_layers=6)
+model = NERModel(lbl2id=ner_data_module.label_to_id, learning_rate=2e-5, frozen_layers=4)
 
 trainer.fit(model, ner_data_module)
 
