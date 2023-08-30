@@ -42,7 +42,7 @@ ner_data_module.setup('fit')
 num_labels = len([k for k in ner_data_module.label_to_id.keys() if k not in []])
 
 #model = DummyNERModel(num_labels=num_labels)
-model = NERModel(lbl2id=ner_data_module.label_to_id, learning_rate=2e-5, frozen_layers=4)
+model = NERModel(label_to_id=ner_data_module.label_to_id, learning_rate=2e-5, frozen_layers=2, tokenizer=ner_data_module.train_dataset.tokenizer)
 
 trainer.fit(model, ner_data_module)
 

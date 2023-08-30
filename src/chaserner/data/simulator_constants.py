@@ -1,6 +1,6 @@
 SEED = 42
 
-TRAIN_DEV_TEST_SPLIT = (0.4, 0.3, 0.3,)
+TRAIN_DEV_TEST_SPLIT = (0.5, 0.3, 0.2,)
 
 
 TEMPLATES = [
@@ -19,7 +19,23 @@ TEMPLATES = [
                 "Could you confirm, {person}, that {task} will be ready by {date}?",
                 "I trust you'll have the {task} sorted out, {person}, by the given deadline on {date}.",
                 "{person}, it's crucial we hit the {date} deadline for {task}.",
-                "Looking forward to your update on the {task}, {person}. Remember, it's due on {date}."
+                "Looking forward to your update on the {task}, {person}. Remember, it's due on {date}.",
+                "By {date}, the {task} should be completed. Can you handle that, {person}?",
+                "The deadline for {task} is set for {date}. {person}, you're on it, right?",
+                "We've set a target date of {date} for {task}. It's in your hands, {person}.",
+                "The {task} is on the calendar for {date}. Awaiting your update, {person}.",
+                "Targeting {date} for the completion of {task}. {person}, please keep us posted.",
+                "The {task} is due on {date}. We're looking to you for this, {person}.",
+                "Mark the date, {person}. {task} needs to be wrapped up by {date}.",
+                "Our milestone for {task} is {date}. {person}, let's make sure we achieve it.",
+                "Ensuring the {task} is done by {date} is critical. Are you on track, {person}?",
+                "The {task} is set to be finalized on {date}. {person}, please prioritize this.",
+                "{task} is on the docket for {date}. We're trusting you with this, {person}.",
+                "By {date}, we're expecting the {task} to be off our checklist. {person}, you've got this!",
+                "The {task} is on our radar for {date}. We're relying on your expertise, {person}.",
+                "{person}, as you're aware, our {task} deadline is {date}. Please ensure everything's on schedule.",
+                "{task} is a key deliverable for {date}. {person}, keep us in the loop with your progress.",
+                "We've circled {date} on our calendar for {task}. All eyes on you, {person}."
 ]
 
 

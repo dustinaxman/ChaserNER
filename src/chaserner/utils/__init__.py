@@ -1,4 +1,3 @@
-import json
 from typing import List, Dict
 import torch
 
@@ -15,7 +14,22 @@ def model_output_to_label_tensor(outputs, offset_mapping, ids2lbl):
     return labels_list
 
 
-def batch_to_jsonl(batch, tokenizer, ids2lbl, outputs=None) -> List[str]:
+def detokenize(tokenized_text):
+    # Remove [CLS] and [SEP] tokens
+    tokenized_text = [t for t in tokenized_text.split() if t not in ['[CLS]', '[SEP]']]
+
+    # Convert WordPiece tokenization to full words
+    text = ' '.join(tokenized_text).replace(' ##', '')
+
+    # Handle punctuation
+    text = text.replace(" ' s", "'s")  # Handle possessives
+    for punctuation in [' ,', ' .', ' ?', ' !', ' ;', ' :']:
+        text = text.replace(punctuation, punctuation[-1])
+
+    return text
+
+
+def batch_to_info(batch, tokenizer, ids2lbl, outputs=None) -> List[str]:
     input_ids = batch['input_ids']
     raw_labels = batch['labels']
     offset_mapping = batch['offset_mapping'].squeeze(1)
@@ -28,11 +42,10 @@ def batch_to_jsonl(batch, tokenizer, ids2lbl, outputs=None) -> List[str]:
     tok_texts = [tokenizer.convert_ids_to_tokens(ids) for ids in input_ids]
 
     # Convert tokens to raw_text (by joining tokens and removing special tokens)
-    raw_texts = [' '.join([tok for tok in tok_text if not tok.startswith('[') and not tok.endswith(']')]) for tok_text
-                 in tok_texts]
+    raw_texts = detokenize(" ".join(tok_texts))
 
     # Convert numerical labels and predictions to their string representations
-    gt_tok_forms = [[ids2lbl[idx.item()] for idx in tensor] for tensor in raw_labels]
+    gt_tok_forms = [[ids2lbl[idx.item()] if idx != -100 else "-100" for idx in tensor] for tensor in raw_labels]
     if outputs is not None:
         hyp_tok_forms = [[ids2lbl[idx.item()] for idx in tensor] for tensor in all_predicted_classes]
     else:
@@ -48,8 +61,7 @@ def batch_to_jsonl(batch, tokenizer, ids2lbl, outputs=None) -> List[str]:
     else:
         hyp_norm_forms = [["None"]] * len(gt_norm_forms)
 
-    # Create the JSONL formatted data
-    jsonl_data = []
+    logged_info = []
     for raw_text, tok_text, gt_tok_form, gt_norm_form, hyp_tok_form, hyp_norm_form in zip(raw_texts, tok_texts,
                                                                                           gt_tok_forms, gt_norm_forms,
                                                                                           hyp_tok_forms,
@@ -62,7 +74,7 @@ def batch_to_jsonl(batch, tokenizer, ids2lbl, outputs=None) -> List[str]:
             "hyp_tok_form": ' '.join(hyp_tok_form),
             "hyp_norm_form": ' '.join(hyp_norm_form)
         }
-        jsonl_data.append(json.dumps(entry))
+        logged_info.append(entry)
 
-    return jsonl_data
+    return logged_info
 

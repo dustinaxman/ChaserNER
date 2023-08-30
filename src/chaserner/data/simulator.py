@@ -45,26 +45,26 @@ def generate_sentences(templates, task_catalog, person_catalog, date_catalog):
             sentence = template.format(task=task, person=person, date=date)
             label = []
             for tok in template.split():
-                # if "{task}" in tok:
-                #     if len(task):
-                #         label.append("B-task")
-                #         for tok_in_task in task.split()[1:]:
-                #             label.append("I-task")
-                # elif "{person}" in tok:
-                #     if len(person):
-                #         label.append("B-person")
-                #         for tok_in_person in person.split()[1:]:
-                #             label.append("I-person")
                 if "{task}" in tok:
                     if len(task):
-                        label.append("O")
+                        label.append("B-task")
                         for tok_in_task in task.split()[1:]:
-                            label.append("O")
+                            label.append("I-task")
                 elif "{person}" in tok:
                     if len(person):
-                        label.append("O")
+                        label.append("B-person")
                         for tok_in_person in person.split()[1:]:
-                            label.append("O")
+                            label.append("I-person")
+                # if "{task}" in tok:
+                #     if len(task):
+                #         label.append("O")
+                #         for tok_in_task in task.split()[1:]:
+                #             label.append("O")
+                # elif "{person}" in tok:
+                #     if len(person):
+                #         label.append("O")
+                #         for tok_in_person in person.split()[1:]:
+                #             label.append("O")
                 elif "{date}" in tok:
                     if len(date):
                         label.append("B-date")

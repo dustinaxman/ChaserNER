@@ -1,9 +1,10 @@
 import torch
+import json
 from pathlib import Path
 import pytorch_lightning as pl
 from transformers import BertForTokenClassification
 from datasets import load_metric
-from chaserner.utils import batch_to_jsonl
+from chaserner.utils import batch_to_info
 import torch.nn as nn
 from chaserner.utils.logger import logger
 
@@ -80,10 +81,11 @@ seqeval_metric = load_metric("seqeval")
 #         return torch.optim.AdamW(self.parameters(), lr=self.learning_rate)
 
 class NERModel(pl.LightningModule):
-    def __init__(self, lbl2id, learning_rate=2e-5, frozen_layers=0):
+    def __init__(self, label_to_id, learning_rate=2e-5, frozen_layers=0, tokenizer=None):
         super(NERModel, self).__init__()
-        num_labels = len([k for k in lbl2id.keys() if k not in []])
-        self.lbl2id = lbl2id
+        num_labels = len([k for k in label_to_id.keys() if k not in []])
+        self.label_to_id = label_to_id
+        self.tokenizer = tokenizer
         self.model = BertForTokenClassification.from_pretrained('SpanBERT/spanbert-base-cased', num_labels=num_labels)
         self.freeze_encoder_layers(frozen_layers)
         self.learning_rate = learning_rate
@@ -143,16 +145,14 @@ class NERModel(pl.LightningModule):
         mask = (offset_mapping[:, :, 0] == 0) & (offset_mapping[:, :, 1] != 0)
         labels_regrouped = [raw_labels[i][mask[i]] for i in range(mask.size(0))]
         hyps_regrouped = [all_predicted_classes[i][mask[i]] for i in range(mask.size(0))]
-        # jsonl_data = batch_to_jsonl(batch, tokenizer, ids2lbl, outputs=outputs)
-        # # Save the jsonl_data to a file (if needed)
-        # with open(Path('~/Downloads/output_test.jsonl'), 'a') as f:
-        #     for line in jsonl_data:
-        #         f.write(line + '\n')
+        data_info = batch_to_info(batch, self.tokenizer, {v: k for k, v in self.label_to_id.items()}, outputs=outputs)
+        with open(Path('/Users/deaxman/Downloads/output_test_eval.jsonl'), 'a') as f:
+            f.write('\n'.join([json.dumps(info_sample) for info_sample in data_info]))
         return loss, labels_regrouped, hyps_regrouped
 
     def proc_loss_lbls_hyps_get_metrics(self, loss_lbl_hyps):
         avg_loss = torch.stack([x['test_loss'] for x in loss_lbl_hyps]).mean()
-        id2lbl = {v: k for k, v in self.lbl2id.items()} # TODO why -100 below
+        id2lbl = {v: k for k, v in self.label_to_id.items()}
         unrolled_lbls = [[id2lbl[s.item()] for s in sample] for batch in loss_lbl_hyps for sample in batch['labels']]
         unrolled_hyps = [[id2lbl[s.item()] for s in sample] for batch in loss_lbl_hyps for sample in batch['hypotheses']]
         seqeval_results = seqeval_metric.compute(predictions=unrolled_hyps, references=unrolled_lbls)

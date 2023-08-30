@@ -9,7 +9,7 @@ from chaserner.data.simulator import simulate_train_dev_test
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
 from chaserner.utils.logger import logger
-from chaserner.utils import batch_to_jsonl
+from chaserner.utils import batch_to_info
 import multiprocessing
 
 NUM_WORKERS = 0#multiprocessing.cpu_count()
@@ -21,7 +21,7 @@ class NERDataset(Dataset):
         self.label_to_id = label_to_id
         self.tokenizer = BertTokenizerFast.from_pretrained(tokenizer_name)
         self.max_length = max_length
-        self.all_data_jsonls = []
+        self.all_data_info = []
 
     def __len__(self):
         return len(self.data)
@@ -65,8 +65,8 @@ class NERDataset(Dataset):
             'offset_mapping': tokenized_data['offset_mapping']
         }
 
-        jsonl_data = batch_to_jsonl(batch, self.tokenizer, {v: k for k, v in self.label_to_id.items()})
-        self.all_data_jsonls.extend(jsonl_data)
+        data_info = batch_to_info(batch, self.tokenizer, {v: k for k, v in self.label_to_id.items()})
+        self.all_data_info.extend(data_info)
         # Save the jsonl_data to a file (if needed)
         return {
             'input_ids': tokenized_data['input_ids'].squeeze(),
@@ -104,7 +104,7 @@ class SimulatorNERDataModule(LightningDataModule):
         self.label_to_id = {label: i for i, label in enumerate(unique_labels)}
         # self.label_to_id["[SEP]"] = len(self.label_to_id)
         # self.label_to_id["[CLS]"] = len(self.label_to_id)
-        #self.label_to_id["-100"] = -100  # Typically, this label is used to ignore tokens.
+        # self.label_to_id["-100"] = -100  # Typically, this label is used to ignore tokens.
 
         config = {}
         config["lbl2ids"] = self.label_to_id
@@ -120,7 +120,7 @@ class SimulatorNERDataModule(LightningDataModule):
         for sample in self.train_dataset:
             pass
         with open(Path.home()/'Downloads/output_test.jsonl', 'w') as f:
-            f.write('\n'.join(self.train_dataset.all_data_jsonls))
+            f.write('\n'.join([json.dumps(info_sample) for info_sample in self.train_dataset.all_data_info]))
         self.val_dataset = NERDataset(dev, self.label_to_id, tokenizer_name=self.tokenizer_name,
                                       max_length=self.max_length)
         self.test_dataset = NERDataset(test, self.label_to_id, tokenizer_name=self.tokenizer_name,
