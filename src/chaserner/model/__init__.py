@@ -81,12 +81,12 @@ seqeval_metric = load_metric("seqeval")
 #         return torch.optim.AdamW(self.parameters(), lr=self.learning_rate)
 
 class NERModel(pl.LightningModule):
-    def __init__(self, label_to_id, learning_rate=2e-5, frozen_layers=0, tokenizer=None):
+    def __init__(self, hf_model_name, label_to_id, learning_rate=2e-5, frozen_layers=0, tokenizer=None):
         super(NERModel, self).__init__()
         num_labels = len([k for k in label_to_id.keys() if k not in []])
         self.label_to_id = label_to_id
         self.tokenizer = tokenizer
-        self.model = BertForTokenClassification.from_pretrained('SpanBERT/spanbert-base-cased', num_labels=num_labels)
+        self.model = BertForTokenClassification.from_pretrained(hf_model_name, num_labels=num_labels)
         self.freeze_encoder_layers(frozen_layers)
         self.learning_rate = learning_rate
         self.val_outputs = []
@@ -147,7 +147,7 @@ class NERModel(pl.LightningModule):
         hyps_regrouped = [all_predicted_classes[i][mask[i]] for i in range(mask.size(0))]
         data_info = batch_to_info(batch, self.tokenizer, {v: k for k, v in self.label_to_id.items()}, outputs=outputs)
         with open(Path('/Users/deaxman/Downloads/output_test_eval.jsonl'), 'a') as f:
-            f.write('\n'.join([json.dumps(info_sample) for info_sample in data_info]))
+            f.write('\n'.join([json.dumps(info_sample) for info_sample in data_info]) + "\n")
         return loss, labels_regrouped, hyps_regrouped
 
     def proc_loss_lbls_hyps_get_metrics(self, loss_lbl_hyps):
@@ -155,7 +155,7 @@ class NERModel(pl.LightningModule):
         id2lbl = {v: k for k, v in self.label_to_id.items()}
         unrolled_lbls = [[id2lbl[s.item()] for s in sample] for batch in loss_lbl_hyps for sample in batch['labels']]
         unrolled_hyps = [[id2lbl[s.item()] for s in sample] for batch in loss_lbl_hyps for sample in batch['hypotheses']]
-        seqeval_results = seqeval_metric.compute(predictions=unrolled_hyps, references=unrolled_lbls)
+        seqeval_results = seqeval_metric.compute(predictions=unrolled_hyps, references=unrolled_lbls, mode="strict")
         metrics = {
             "precision": seqeval_results["overall_precision"],
             "recall": seqeval_results["overall_recall"],
@@ -164,6 +164,12 @@ class NERModel(pl.LightningModule):
             'avg_loss': avg_loss,
             "num_samples": len(unrolled_lbls)
         }
+        metrics.update({k+"_f1":seqeval_results[k]["f1"] for k in seqeval_results if
+         k not in ['overall_precision', 'overall_recall', 'overall_f1', 'overall_accuracy']})
+        metrics.update({k + "_prec": seqeval_results[k]["precision"] for k in seqeval_results if
+         k not in ['overall_precision', 'overall_recall', 'overall_f1', 'overall_accuracy']})
+        metrics.update({k + "_rec": seqeval_results[k]["recall"] for k in seqeval_results if
+         k not in ['overall_precision', 'overall_recall', 'overall_f1', 'overall_accuracy']})
         return metrics
 
     def validation_step(self, batch, batch_idx):
@@ -173,11 +179,12 @@ class NERModel(pl.LightningModule):
     def on_validation_epoch_end(self):
         metrics = self.proc_loss_lbls_hyps_get_metrics(self.val_outputs)
         for metric_name, metric_val in metrics.items():
-            if isinstance(metric_val, torch.Tensor):
-                metric_val = metric_val.float()  # Ensure it's float32
-            else:
-                metric_val = torch.tensor(metric_val, dtype=torch.float32, device=self.device)
-            self.log("val_"+metric_name, metric_val, on_step=False, on_epoch=True, prog_bar=True)
+            if metric_name in ["f1", "precision", "recall", "accuracy", "avg_loss"]:
+                if isinstance(metric_val, torch.Tensor):
+                    metric_val = metric_val.float()  # Ensure it's float32
+                else:
+                    metric_val = torch.tensor(metric_val, dtype=torch.float32, device=self.device)
+                self.log("val_"+metric_name, metric_val, on_step=False, on_epoch=True, prog_bar=True)
 
     def test_step(self, batch, batch_idx):
         loss, labels_regrouped, hyps_regrouped = self.proc_batch_to_lbl_gt_loss(batch)

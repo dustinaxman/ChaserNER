@@ -1,6 +1,6 @@
 SEED = 42
 
-TRAIN_DEV_TEST_SPLIT = (0.5, 0.3, 0.2,)
+TRAIN_DEV_TEST_SPLIT = (0.4, 0.3, 0.2,)
 
 
 TEMPLATES = [
@@ -35,7 +35,37 @@ TEMPLATES = [
                 "The {task} is on our radar for {date}. We're relying on your expertise, {person}.",
                 "{person}, as you're aware, our {task} deadline is {date}. Please ensure everything's on schedule.",
                 "{task} is a key deliverable for {date}. {person}, keep us in the loop with your progress.",
-                "We've circled {date} on our calendar for {task}. All eyes on you, {person}."
+                "We've circled {date} on our calendar for {task}. All eyes on you, {person}.",
+                "{person}, can you ensure the {task} is finalized by {date}?",
+                "It's essential for the {task} to be completed by {date}. Can we count on you, {person}?",
+                "We're aiming to finish the {task} by {date}. {person}, please provide regular updates.",
+                "{person}, the {task} is a top priority and has a deadline of {date}. Please adhere to it.",
+                "For our project timeline, {task} should be wrapped up by {date}. {person}, we're depending on your contributions.",
+                "We need the {task} sorted out by {date}. {person}, can you ensure a smooth execution?",
+                "Our deadline for {task} is fast approaching on {date}. {person}, please push to get it done.",
+                "We're setting a firm cut-off on {date} for the {task}. {person}, your diligence is appreciated.",
+                "{person}, the {task} is expected to be in the final stages by {date}. Please ensure we meet that target.",
+                "The {date} deadline for {task} is non-negotiable. {person}, we're relying heavily on your efforts.",
+                "{person}, we're anticipating the {task} completion by {date}. Your focus on this is crucial.",
+                "For the {task}, the target deadline is {date}. Can we get a confirmation on this, {person}?",
+                "{person}, given the importance of the {task}, we must stick to the {date} deadline.",
+                "We're in the final stretch for {task} with a due date of {date}. {person}, your timely completion is essential.",
+                "All efforts should be directed towards completing the {task} by {date}. {person}, your updates are vital.",
+                "{person}, with the {date} deadline for {task}, we're hoping for a seamless execution.",
+                "The team is looking at {date} for finalizing the {task}. {person}, your expertise is invaluable here.",
+                "{person}, we've set our sights on {date} for the {task}. Let's achieve this milestone together.",
+                "For the {task}, {person}, your commitment to the {date} deadline is deeply appreciated.",
+                "{person}, let's ensure the {task} is in the green by {date}. We're counting on your skills.",
+                "We've chalked out {date} as the D-day for {task}. {person}, all the best!",
+                "{person}, a gentle reminder about the {task}. We're expecting it to be ready by {date}.",
+                "The finish line for {task} is {date}. {person}, we're optimistic about your contributions.",
+                "{person}, the {task} has a strict timeline ending on {date}. Please keep that in mind.",
+                "Our next milestone is the {task} on {date}. {person}, we're eager to see it through.",
+                "In line with our goals, {task} is set for {date}. {person}, we're confident in your abilities.",
+                "The set trajectory for {task} points to a {date} deadline. {person}, let's stick to the plan.",
+                "{person}, the {task} is of paramount importance with a due date on {date}. Please prioritize.",
+                "As the key person for {task}, {person}, we're looking at a {date} completion.",
+                "Our project hinges on the {task} due by {date}. {person}, your role is pivotal."
 ]
 
 
@@ -80,15 +110,15 @@ TASK_CATALOG = ["reports on the model latency",
 ]
 
 PERSON_CATALOG = [
-                "dustin",
-                "denise",
-                "josh",
-                "elias",
+                "dustin axman",
+                "denise liu",
+                "josh martow",
+                "elias adum",
                 "mary sue",
                 "johnathan doe",
                 "robert ross",
                 "eric lee",
-                "rebecca",
+                "rebecca dogmire",
                 "michael axman",
                 "amelia smith",
                 "oliver jones",
@@ -119,8 +149,41 @@ PERSON_CATALOG = [
                 "alexander flores",
                 "abigail nelson",
                 "ethan clark",
-                "zoe lewis"
+                "zoe lewis",
+                "nathanial wright",
+                "chelsea baker",
+                "geoffrey allen",
+                "claire mitchell",
+                "victor gonzalez",
+                "katherine scott",
+                "timothy evans",
+                "ruby king",
+                "albert ramirez",
+                "gwendolyn carter",
+                "lawrence roberts",
+                "heather robinson",
+                "franklin phillips",
+                "angelica torres",
+                "marvin peterson",
+                "louise green",
+                "raymond reed",
+                "julia cruz",
+                "donald bailey",
+                "diane russell",
+                "clarence coleman",
+                "fiona morris",
+                "howard hughes",
+                "cassandra patterson",
+                "reginald gray",
+                "penny simmons",
+                "terrence woods",
+                "belinda foster",
+                "duane hawkins",
+                "melody hayes"
 ]
+
+#Add all of the first names only
+#PERSON_CATALOG = PERSON_CATALOG + [person.split()[0] for person in PERSON_CATALOG]
 
 
 DATE_CATALOG = ["october 20th 2023",
@@ -138,8 +201,6 @@ DATE_CATALOG = ["october 20th 2023",
                 "the last day of this month",
                 "q3 2024",
                 "12/31",
-                "easter",
-                "thanksgiving day",
                 "may 10th",
                 "january of next year",
                 "in two weeks",

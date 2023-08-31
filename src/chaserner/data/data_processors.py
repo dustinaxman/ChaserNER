@@ -120,7 +120,7 @@ class SimulatorNERDataModule(LightningDataModule):
         for sample in self.train_dataset:
             pass
         with open(Path.home()/'Downloads/output_test.jsonl', 'w') as f:
-            f.write('\n'.join([json.dumps(info_sample) for info_sample in self.train_dataset.all_data_info]))
+            f.write('\n'.join([json.dumps(info_sample) for info_sample in self.train_dataset.all_data_info]) + "\n")
         self.val_dataset = NERDataset(dev, self.label_to_id, tokenizer_name=self.tokenizer_name,
                                       max_length=self.max_length)
         self.test_dataset = NERDataset(test, self.label_to_id, tokenizer_name=self.tokenizer_name,
