@@ -4,7 +4,7 @@ import json
 import random
 from pathlib import Path
 from torch.utils.data import Dataset
-from transformers import DebertaTokenizerFast
+from transformers import BertTokenizerFast
 from chaserner.data.simulator import simulate_train_dev_test
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
@@ -19,7 +19,7 @@ class NERDataset(Dataset):
     def __init__(self, data, label_to_id, tokenizer_name='SpanBERT/spanbert-base-cased', max_length=512):
         self.data = data
         self.label_to_id = label_to_id
-        self.tokenizer = DebertaTokenizerFast.from_pretrained(tokenizer_name, add_prefix_space=True)
+        self.tokenizer = BertTokenizerFast.from_pretrained(tokenizer_name)
         self.max_length = max_length
         self.all_data_info = []
 

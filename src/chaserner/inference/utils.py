@@ -1,5 +1,5 @@
 import torch
-from transformers import DebertaTokenizerFast
+from transformers import BertTokenizerFast
 import json
 from chaserner.model import NERModel
 from chaserner.utils import model_output_to_label_tensor, extract_entities
@@ -15,7 +15,7 @@ def input_text_list_to_extracted_entities(input_text_list, config_path):
     max_length = config["max_length"]
     model_path = config_path.parent/config["best_checkpoint"]
     tokenizer_name = config["tokenizer_name"]
-    tokenizer = DebertaTokenizerFast.from_pretrained(tokenizer_name, add_prefix_space=True)
+    tokenizer = BertTokenizerFast.from_pretrained(tokenizer_name)
     # TODO: remove the extra args here later!!! for later models
     model = NERModel.load_from_checkpoint(checkpoint_path=model_path, hf_model_name=tokenizer_name, label_to_id=config["lbl2ids"])
     model = model.to('cpu')

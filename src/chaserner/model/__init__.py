@@ -2,7 +2,7 @@ import torch
 import json
 from pathlib import Path
 import pytorch_lightning as pl
-from transformers import DebertaForTokenClassification
+from transformers import BertForTokenClassification
 from datasets import load_metric
 from chaserner.utils import batch_to_info
 import torch.nn as nn
@@ -86,7 +86,7 @@ class NERModel(pl.LightningModule):
         num_labels = len([k for k in label_to_id.keys() if k not in []])
         self.label_to_id = label_to_id
         self.tokenizer = tokenizer
-        self.model = DebertaForTokenClassification.from_pretrained(hf_model_name, num_labels=num_labels)
+        self.model = BertForTokenClassification.from_pretrained(hf_model_name, num_labels=num_labels)
         self.freeze_encoder_layers(frozen_layers)
         self.learning_rate = learning_rate
         self.val_outputs = []
@@ -203,7 +203,7 @@ class NERModel(pl.LightningModule):
         """
         Freeze the first `num_layers_to_freeze` of the BERT model.
         """
-        for layer in self.model.deberta.encoder.layer[:num_layers_to_freeze]:
+        for layer in self.model.bert.encoder.layer[:num_layers_to_freeze]:
             for param in layer.parameters():
                 param.requires_grad = False
 
