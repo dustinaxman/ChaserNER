@@ -1,9 +1,3 @@
-# import torch
-# from transformers import BertTokenizerFast
-# import json
-# from chaserner.model import NERModel
-# from chaserner.utils import model_output_to_label_tensor, extract_entities
-
 
 
 #

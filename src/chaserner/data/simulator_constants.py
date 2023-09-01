@@ -1,6 +1,6 @@
 SEED = 42
 
-TRAIN_DEV_TEST_SPLIT = (0.4, 0.3, 0.2,)
+TRAIN_DEV_TEST_SPLIT = (0.45, 0.3, 0.25,)
 
 
 TEMPLATES = [
@@ -74,7 +74,7 @@ TASK_CATALOG = ["reports on the model latency",
                 "revenue mockup sheet",
                 "presentation on the project plan",
                 "cr for the newest feature processing code",
-                "document on business opporunity in each locale",
+                "document on business opportunity in each locale",
                 "design spec for the security review",
                 "webpage template for our investors"
                 "analysis of user engagement metrics",

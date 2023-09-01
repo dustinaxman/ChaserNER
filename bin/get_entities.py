@@ -1,6 +1,6 @@
 import argparse
 import json
-from chaserner.utils import input_text_list_to_extracted_entities
+from chaserner.inference.utils import input_text_list_to_extracted_entities
 
 
 if __name__ == "__main__":

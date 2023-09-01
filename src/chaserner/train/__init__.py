@@ -43,9 +43,11 @@ trainer = Trainer(
     max_epochs=5,
     callbacks=[early_stop_callback, checkpoint_callback]
 )
-
+# TODO: try bigger model
+# TODO: add in more data (bigger ratio)
 tokenizer_name = 'SpanBERT/spanbert-base-cased'
 hf_model_name = 'SpanBERT/spanbert-base-cased'
+#"microsoft/deberta-base"
 
 ner_data_module = SimulatorNERDataModule(batch_size=128, tokenizer_name=tokenizer_name, max_length=64, config_path=config_path)
 
@@ -64,7 +66,7 @@ destination = save_model_dir / best_checkpoint.name
 shutil.copy(best_checkpoint, destination)
 
 #Update the config with the best checkpoint path
-with config_path.open("w") as f:
+with config_path.open() as f:
     config = json.load(f)
 
 config["best_checkpoint"] = best_checkpoint.name
