@@ -1,6 +1,7 @@
 SEED = 42
 
-TRAIN_DEV_TEST_SPLIT = (0.1, 0.1, 0.1,)
+TRAIN_DEV_TEST_SPLIT = (0.45, 0.3, 0.25,)
+#TRAIN_DEV_TEST_SPLIT = (0.1, 0.1, 0.1,)
 
 TEMPLATES = [
                 "please complete the {task} by {date} {person}.",
