@@ -2,7 +2,6 @@ SEED = 42
 
 TRAIN_DEV_TEST_SPLIT = (0.45, 0.3, 0.25,)
 
-
 TEMPLATES = [
                 "please complete the {task} by {date} {person}.",
                 "hello {person}, I just wanted to check if you were planning to complete {task} by {date}.",
