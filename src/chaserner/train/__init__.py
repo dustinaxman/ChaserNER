@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 import json
 import shutil
+from chaserner.utils.logger import logger
 
 
 
@@ -83,3 +84,5 @@ trainer.validate(datamodule=ner_data_module)
 
 trainer.test(datamodule=ner_data_module)
 
+
+logger.info(f"Model saved to: {save_model_dir}")
