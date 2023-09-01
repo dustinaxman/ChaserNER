@@ -1,6 +1,5 @@
 from typing import List, Dict
 import torch
-from transformers import BertTokenizerFast
 
 
 

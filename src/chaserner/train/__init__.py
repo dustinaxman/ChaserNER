@@ -45,11 +45,12 @@ trainer = Trainer(
 )
 # TODO: try bigger model
 # TODO: add in more data (bigger ratio)
-tokenizer_name = 'SpanBERT/spanbert-base-cased'
-hf_model_name = 'SpanBERT/spanbert-base-cased'
-#"microsoft/deberta-base"
+# tokenizer_name = 'SpanBERT/spanbert-base-cased'
+# hf_model_name = 'SpanBERT/spanbert-base-cased'
+hf_model_name = "microsoft/deberta-base"
+tokenizer_name = "microsoft/deberta-base"
 
-ner_data_module = SimulatorNERDataModule(batch_size=128, tokenizer_name=tokenizer_name, max_length=64, config_path=config_path)
+ner_data_module = SimulatorNERDataModule(batch_size=64, tokenizer_name=tokenizer_name, max_length=64, config_path=config_path)
 
 ner_data_module.setup('fit')
 
@@ -81,3 +82,4 @@ with config_path.open("w") as f:
 trainer.validate(datamodule=ner_data_module)
 
 trainer.test(datamodule=ner_data_module)
+
