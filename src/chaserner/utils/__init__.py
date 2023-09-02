@@ -38,7 +38,6 @@ def extract_entities(tokens, labels):
     return entities
 
 
-
 def join_raw_labels(raw_labels, offset_mapping):
     mask = (offset_mapping[:, :, 0] == 0) & (offset_mapping[:, :, 1] != 0)
     selected_values_list = [raw_labels[i][mask[i]] for i in range(mask.size(0))]
