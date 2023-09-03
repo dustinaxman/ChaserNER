@@ -45,7 +45,7 @@ def join_raw_labels(raw_labels, offset_mapping):
 
 
 def model_output_to_label_tensor(outputs, offset_mapping, ids2lbl):
-    raw_labels = torch.argmax(outputs.logits, dim=-1)
+    raw_labels = torch.argmax(outputs["logits"], dim=-1)
     selected_values_list = join_raw_labels(raw_labels, offset_mapping)
     labels_list = [[ids2lbl[idx.item()] for idx in tensor] for tensor in selected_values_list]
     return labels_list
@@ -71,7 +71,7 @@ def batch_to_info(batch, tokenizer, ids2lbl, outputs=None) -> List[str]:
     offset_mapping = batch['offset_mapping'].squeeze(1)
 
     if outputs is not None:
-        logits = outputs.logits
+        logits = outputs["logits"]
         all_predicted_classes = torch.argmax(logits, dim=-1)
 
     # Convert input_ids to tokens

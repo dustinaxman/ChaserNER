@@ -6,6 +6,9 @@ from chaserner.utils import model_output_to_label_tensor, extract_entities
 from pathlib import Path
 import time
 
+#import os
+#os.environ["OMP_NUM_THREADS"] = "1"
+
 def input_text_list_to_extracted_entities(input_text_list, config_path):
     start_time_1 = time.time()
     config_path = Path(config_path)
@@ -17,7 +20,14 @@ def input_text_list_to_extracted_entities(input_text_list, config_path):
     tokenizer_name = config["tokenizer_name"]
     tokenizer = BertTokenizerFast.from_pretrained(tokenizer_name)
     # TODO: remove the extra args here later!!! for later models
-    model = NERModel.load_from_checkpoint(checkpoint_path=model_path, hf_model_name=tokenizer_name, label_to_id=config["lbl2ids"])
+    if "torchscript_model" in config:
+        model_path = config_path.parent/config["torchscript_model"]
+        print("LOADING TORCHSCRIPT FILE")
+        model = torch.jit.load(str(model_path))
+    else:
+        print("LOADING MODEL CHECKPOINT")
+        model = NERModel.load_from_checkpoint(checkpoint_path=model_path, hf_model_name=tokenizer_name, label_to_id=config["lbl2ids"])
+    model.eval()
     model = model.to('cpu')
 
     #max_input_length = max([len(txt.split()) for txt in input_text_list])
@@ -42,6 +52,7 @@ def input_text_list_to_extracted_entities(input_text_list, config_path):
     ).to("cpu")
 
     outputs = model(tokenized_data["input_ids"], tokenized_data["attention_mask"])
+    #print(outputs)
     labels_list = model_output_to_label_tensor(outputs, tokenized_data["offset_mapping"], ids2lbl)
     total_time = time.time() - start_time_2
     load_time = start_time_2 - start_time_1

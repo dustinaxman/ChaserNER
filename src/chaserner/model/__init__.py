@@ -139,7 +139,7 @@ class NERModel(pl.LightningModule):
         offset_mapping = batch['offset_mapping']
         outputs = self(input_ids, attention_mask, raw_labels)
         loss = outputs.loss
-        logits = outputs.logits
+        logits = outputs["logits"]
         all_predicted_classes = torch.argmax(logits, dim=-1)
         offset_mapping = offset_mapping.squeeze(1)
         mask = (offset_mapping[:, :, 0] == 0) & (offset_mapping[:, :, 1] != 0)
