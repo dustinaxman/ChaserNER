@@ -10,7 +10,7 @@ import time
 #os.environ["OMP_NUM_THREADS"] = "1"
 
 
-def load_model(config_path):
+def load_model(config_path, device):
     config_path = Path(config_path)
     with open(config_path) as f:
         config = json.load(f)
@@ -29,11 +29,11 @@ def load_model(config_path):
         model = NERModel.load_from_checkpoint(checkpoint_path=model_path, hf_model_name=tokenizer_name,
                                               label_to_id=config["lbl2ids"])
     model.eval()
-    model = model.to('cpu')
+    model = model.to(device)
     return model, tokenizer, max_length, ids2lbl
 
 
-def run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl):
+def run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl, device):
     token_lengths = [len(tokenizer.tokenize(txt)) for txt in input_text_list]
 
     # Find the maximum token length from the tokenized texts
@@ -49,7 +49,7 @@ def run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl):
         return_tensors='pt',
         is_split_into_words=True,
         return_offsets_mapping=True
-    ).to("cpu")
+    ).to(device)
 
     outputs = model(tokenized_data["input_ids"], tokenized_data["attention_mask"])
     # print(outputs)
@@ -60,16 +60,17 @@ def run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl):
     return entity_extracted_samples
 
 
-def input_text_list_to_extracted_entities(input_text_list, config_path):
+def input_text_list_to_extracted_entities(input_text_list, config_path, device):
     start_time_1 = time.time()
     config_path = Path(config_path)
-    model, tokenizer, max_length, ids2lbl = load_model(config_path)
+    model, tokenizer, max_length, ids2lbl = load_model(config_path, device)
+    print(f"Using device: {device}")
 
     #max_input_length = max([len(txt.split()) for txt in input_text_list])
 
     start_time_2 = time.time()
 
-    entity_extracted_samples = run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl)
+    entity_extracted_samples = run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl, device)
 
     total_time = time.time() - start_time_2
     load_time = start_time_2 - start_time_1

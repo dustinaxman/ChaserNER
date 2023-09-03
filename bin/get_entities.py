@@ -13,6 +13,7 @@ if __name__ == "__main__":
     # Argument flag for the path to the config file.
     parser.add_argument('--config', type=str, required=True, help="Path to the config file.")
 
+    parser.add_argument('--device', default='cpu', type=str, required=False, help="Device (gpu, mps, cpu)")
     # Argument flag for the path to the output JSON file.
     parser.add_argument('--output', type=str, required=True, help="Path to save the output JSON.")
 
@@ -23,7 +24,7 @@ if __name__ == "__main__":
         input_texts = infile.readlines()
 
     # Call your function
-    results = input_text_list_to_extracted_entities(input_texts, args.config)
+    results = input_text_list_to_extracted_entities(input_texts, args.config, args.device)
 
     # Write the results to the specified output JSON file.
     with open(args.output, "w") as outfile:
