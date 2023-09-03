@@ -1,7 +1,48 @@
 from typing import List, Dict
 import torch
 
-
+class LFUCache:
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        self.cache = {}
+        self.key_freq = {}
+        self.freq_list = {}
+        self.min_freq = 0
+    def _update(self, key: int):
+        freq = self.key_freq[key]
+        self.key_freq[key] = freq + 1
+        # remove the key from the current frequency list
+        self.freq_list[freq].remove(key)
+        if not self.freq_list[freq]:
+            del self.freq_list[freq]
+            # update the minimum frequency if needed
+            if self.min_freq == freq:
+                self.min_freq += 1
+        # add the key to the new frequency list
+        self.freq_list.setdefault(freq + 1, []).append(key)
+    def get(self, key: int) -> int:
+        # update the key's frequency
+        if key not in self.cache:
+            return None
+        self._update(key)
+        return self.cache[key]
+    def put(self, key: int, value: int) -> None:
+        if key in self.cache:
+            self.cache[key] = value
+            self._update(key)
+            return
+        # if the cache is full, evict the least frequently used key
+        if len(self.cache) == self.capacity:
+            lfu_key = self.freq_list[self.min_freq][0]
+            del self.cache[lfu_key]
+            del self.key_freq[lfu_key]
+            self.freq_list[self.min_freq].pop(0)
+            if not self.freq_list[self.min_freq]:
+                del self.freq_list[self.min_freq]
+        self.cache[key] = value
+        self.key_freq[key] = 1
+        self.freq_list.setdefault(1, []).append(key)
+        self.min_freq = 1
 
 def extract_entities(tokens, labels):
     entities = []

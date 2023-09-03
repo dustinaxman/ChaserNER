@@ -50,8 +50,10 @@ def run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl, device
         is_split_into_words=True,
         return_offsets_mapping=True
     ).to(device)
-
+    start_time_model_only = time.time()
     outputs = model(tokenized_data["input_ids"], tokenized_data["attention_mask"])
+    total_time = time.time() - start_time_model_only
+    print(f"MODEL ONLY: {total_time}")
     # print(outputs)
     labels_list = model_output_to_label_tensor(outputs, tokenized_data["offset_mapping"], ids2lbl)
     entity_extracted_samples = [{"input_text": input_text,
