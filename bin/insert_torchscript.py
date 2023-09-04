@@ -42,6 +42,6 @@ if __name__ == "__main__":
     # traced_model = torch.jit.trace(model, example_inputs)
     torchscript_model_path = config_path.parent/'model.pt'
     traced_model.save(torchscript_model_path)
-    config["torchscript_model"] = str(torchscript_model_path)
+    config["torchscript_model"] = str(torchscript_model_path.name)
     with open(config_path, "w") as f:
         json.dump(config, f)

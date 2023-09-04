@@ -1,0 +1,12 @@
+inference_address=http://0.0.0.0:8080
+management_address=http://0.0.0.0:8081
+batch_size=32
+max_batch_delay=500
+batchSize=32
+maxBatchDelay=500
+number_of_workers=1
+default_workers_per_model=1
+#models={"chaser_ner_model":{"1.0":{"batch_size":32,"max_batch_delay":500}}}
+models={"chaser_ner_model":{"1.0":{"batchSize":32,"maxBatchDelay":500}}}
+#models=chaser_ner_model={batch_size:32,max_batch_delay:500}
+#models=chaser_ner_model={batchSize:32,maxBatchDelay:500}

@@ -1,0 +1,9 @@
+# TS frontend parameters
+# See all supported parameters: https://github.com/pytorch/serve/blob/master/frontend/archive/src/main/java/org/pytorch/serve/archive/model/ModelConfig.java#L14 
+minWorkers: 1 # default: #CPU or #GPU
+maxWorkers: 1 # default: #CPU or #GPU
+batchSize: 32 # default: 1
+maxBatchDelay: 500 # default: 100 msec
+responseTimeout: 120 # default: 120 sec
+deviceType: cpu # cpu, gpu, neuron
+

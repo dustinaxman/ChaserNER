@@ -50,6 +50,7 @@ def run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl, device
         is_split_into_words=True,
         return_offsets_mapping=True
     ).to(device)
+    print(tokenized_data["input_ids"])
     start_time_model_only = time.time()
     outputs = model(tokenized_data["input_ids"], tokenized_data["attention_mask"])
     total_time = time.time() - start_time_model_only
