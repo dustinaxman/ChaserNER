@@ -1,0 +1,29 @@
+
+model_dir=~/Downloads/good_ner_spanbert_model
+model_dir="${model_dir%/}"
+torchserve_image_name=good_ner_spanbert_model_image_5
+docker_container_name=good_ner_spanbert_model_container_5
+
+/opt/homebrew/bin/python3 /Users/deaxman/Projects/ChaserNER/bin/insert_torchscript.py --config_path ${model_dir}/config.json
+
+
+/Users/deaxman/Projects/ChaserNER/bin/insert_torchserve.sh ${model_dir}
+
+
+
+docker build -t ${torchserve_image_name} -f ${model_dir}/Dockerfile ${model_dir}/
+docker run -p 8080:8080 -p 8081:8081 --name ${docker_container_name} ${torchserve_image_name}
+
+
+
+curl -X POST http://localhost:8080/predictions/chaser_ner_model \
+     -H "Content-Type: application/json" \
+     -d '{"text": "Your sample text here"}'
+
+
+docker stats good_ner_spanbert_model_container_12
+docker inspect -f '{{.HostConfig.Memory}}' good_ner_spanbert_model_container_12
+docker top good_ner_spanbert_model_container_12
+
+
+
