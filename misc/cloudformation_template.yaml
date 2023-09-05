@@ -1,0 +1,146 @@
+Resources:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: p6g.medium
+      ImageId: ami-0b9ce70cf1bc24fc3
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y docker
+          service docker start
+          usermod -a -G docker ec2-user
+          $(aws ecr get-login --no-include-email --region ${AWS::Region})
+          docker pull 198449958201.dkr.ecr.us-east-1.amazonaws.com/chaser_ner:latest
+          docker run -d -p 8080:8080 -p 8081:8081 198449958201.dkr.ecr.us-east-1.amazonaws.com/chaser_ner:latest
+      KeyName: main
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable ports for TorchServe
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '8080'
+        ToPort: '8081'
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: '443'
+        ToPort: '443'
+        CidrIp: 0.0.0.0/0
+
+  EC2InstanceProfile:
+  Type: 'AWS::IAM::InstanceProfile'
+  Properties:
+    Path: "/"
+    Roles:
+      - Ref: EC2Role
+
+
+  EC2Role:
+  Type: 'AWS::IAM::Role'
+  Properties:
+    AssumeRolePolicyDocument:
+      Version: '2012-10-17'
+      Statement:
+        - Effect: Allow
+          Principal:
+            Service: ec2.amazonaws.com
+          Action: sts:AssumeRole
+    Path: "/"
+
+  EC2Policy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: EC2ECRPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchGetImage
+              - ecr:BatchCheckLayerAvailability
+              - ecr:GetAuthorizationToken
+            Resource: '*'
+      Roles:
+        - Ref: EC2Role
+
+
+  Api:
+    Type: "AWS::ApiGateway::RestApi"
+    Properties:
+      Name: "TorchServeAPI"
+      Description: "API for TorchServe"
+      FailOnWarnings: "true"
+
+  RootMethod:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      ResourceId:
+        Fn::GetAtt:
+        - "Api"
+        - "RootResourceId"
+      RestApiId:
+        Ref: "Api"
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: HTTP_PROXY
+        Uri:
+          Fn::Sub:
+          - "http://${EC2Instance.PublicIp}:8080/predictions/chaser_ner_model"
+          - EC2Instance:
+              Ref: EC2Instance
+
+  Deployment:
+    DependsOn: RootMethod
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId:
+        Ref: "Api"
+
+  ApiKey:
+    Type: "AWS::ApiGateway::ApiKey"
+    Properties:
+      Description: "API Key for restricted access"
+      Enabled: "true"
+      Name: "MyRestrictedAPIKey"
+      StageKeys:
+        - RestApiId: !Ref Api
+          StageName: !Ref Deployment.StageName
+
+  UsagePlan:
+    Type: "AWS::ApiGateway::UsagePlan"
+    DependsOn: Deployment
+    Properties:
+      ApiStages:
+      - ApiId: !Ref Api
+        Stage: !Ref Deployment.StageName
+      Description: "Usage plan for our API"
+      Quota:
+        Limit: 5000
+        Period: "MONTH"
+      Throttle:
+        BurstLimit: 1000
+        RateLimit: 500
+
+  UsagePlanKey:
+    Type: "AWS::ApiGateway::UsagePlanKey"
+    Properties:
+      KeyId: !Ref ApiKey
+      KeyType: "API_KEY"
+      UsagePlanId: !Ref UsagePlan
+
+Outputs:
+  ApiEndpoint:
+    Description: "URL for the deployed TorchServe API endpoint."
+    Value:
+      Fn::Sub:
+        - "https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/${DeploymentStage}/"
+        - RestApi: !Ref Api
+          DeploymentStage: !Ref Deployment.StageName
