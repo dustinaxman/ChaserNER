@@ -1,7 +1,7 @@
 SEED = 42
 
 TRAIN_DEV_TEST_SPLIT = (0.45, 0.3, 0.25,)
-#TRAIN_DEV_TEST_SPLIT = (0.1, 0.1, 0.1,)
+#TRAIN_DEV_TEST_SPLIT = (0.05, 0.05, 0.05,)
 
 TEMPLATES = [
                 "please complete the {task} by {date} {person}.",
@@ -72,6 +72,10 @@ TEMPLATES = [
 
 TASK_CATALOG = ["reports on the model latency",
                 "revenue mockup sheet",
+                "report",
+                "presentation"
+                "review",
+                "document",
                 "presentation on the project plan",
                 "cr for the newest feature processing code",
                 "document on business opportunity in each locale",

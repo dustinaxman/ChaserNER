@@ -83,6 +83,8 @@ class SimulatorNERDataModule(LightningDataModule):
         self.tokenizer_name = tokenizer_name
         self.max_length = max_length
 
+        working_dir = Path(config_path).parent
+
         # Loading data
         train, dev, test = simulate_train_dev_test()
 
@@ -93,7 +95,7 @@ class SimulatorNERDataModule(LightningDataModule):
         def proc_dict(dict_val):
             return " | ".join([k+":"+v for k, v in dict_val.items()])
 
-        with open("/Users/deaxman/Downloads/simulated_data.txt", "w") as f:
+        with open(working_dir/"simulated_data.txt", "w") as f:
             #f.write("\n".join(["\t".join([" ".join([txt+"|"+lbl for txt, lbl in zip(txt_input.split(), raw_labels)]), proc_dict(labels)]) for txt_input, labels, raw_labels in all_data]))
             f.write("\n".join(["\t".join(
                 [txt_input, proc_dict(labels), " ".join(raw_labels)]) for
@@ -119,7 +121,7 @@ class SimulatorNERDataModule(LightningDataModule):
 
         for sample in self.train_dataset:
             pass
-        with open(Path.home()/'Downloads/output_test.jsonl', 'w') as f:
+        with open(working_dir/'output_test.jsonl', 'w') as f:
             f.write('\n'.join([json.dumps(info_sample) for info_sample in self.train_dataset.all_data_info]) + "\n")
         self.val_dataset = NERDataset(dev, self.label_to_id, tokenizer_name=self.tokenizer_name,
                                       max_length=self.max_length)
