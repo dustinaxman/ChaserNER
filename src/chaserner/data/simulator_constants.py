@@ -1,10 +1,14 @@
 SEED = 42
 
-TRAIN_DEV_TEST_SPLIT = (0.45, 0.3, 0.25,)
-#TRAIN_DEV_TEST_SPLIT = (0.05, 0.05, 0.05,)
+#TRAIN_DEV_TEST_SPLIT = (0.45, 0.3, 0.25,)
+TRAIN_DEV_TEST_SPLIT = (0.25, 0.1, 0.1,)
 
 TEMPLATES = [
                 "please complete the {task} by {date} {person}.",
+                "{person} to complete the {task} by {date}",
+                "{person} to complete {task} by {date}",
+                "{person} to finish the {task} before {date}",
+                "{person} will do the {task} before {date}",
                 "hello {person}, I just wanted to check if you were planning to complete {task} by {date}.",
                 "before {date} we need to finish the {task}, which is something that {person} is working on.",
                 "hey {person}, would you please make sure you do the {task} no later than {date}.",

@@ -47,7 +47,7 @@ def train_and_save_model(save_model_dir, tokenizer_name = 'SpanBERT/spanbert-bas
     ner_data_module.setup('fit')
     num_labels = len([k for k in ner_data_module.label_to_id.keys() if k not in []])
     #model = DummyNERModel(num_labels=num_labels)
-    model = NERModel(hf_model_name=hf_model_name, label_to_id=ner_data_module.label_to_id, learning_rate=learning_rate, frozen_layers=frozen_layers, tokenizer=ner_data_module.train_dataset.tokenizer)
+    model = NERModel(working_dir=save_model_dir, hf_model_name=hf_model_name, label_to_id=ner_data_module.label_to_id, learning_rate=learning_rate, frozen_layers=frozen_layers, tokenizer=ner_data_module.train_dataset.tokenizer)
     trainer.fit(model, ner_data_module)
 
     best_checkpoint = Path(checkpoint_callback.best_model_path)

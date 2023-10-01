@@ -10,7 +10,7 @@ from chaserner.utils.logger import logger
 
 seqeval_metric = load_metric("seqeval")
 
-
+DEFAULT_WORKING_DIR = Path.home()
 
 
 # class DummyNERModel(pl.LightningModule):
@@ -81,7 +81,7 @@ seqeval_metric = load_metric("seqeval")
 #         return torch.optim.AdamW(self.parameters(), lr=self.learning_rate)
 
 class NERModel(pl.LightningModule):
-    def __init__(self, hf_model_name, label_to_id, learning_rate=2e-5, frozen_layers=0, tokenizer=None):
+    def __init__(self, hf_model_name, label_to_id, learning_rate=2e-5, frozen_layers=0, tokenizer=None, working_dir=DEFAULT_WORKING_DIR):
         super(NERModel, self).__init__()
         num_labels = len([k for k in label_to_id.keys() if k not in []])
         self.label_to_id = label_to_id
@@ -93,6 +93,7 @@ class NERModel(pl.LightningModule):
         self.test_outputs = []
         self.train_epoch_loss = 0.0
         self.train_batch_count = 0
+        self.working_dir = Path(working_dir)
 
     def forward(self, input_ids, attention_mask, labels=None):
         return self.model(input_ids, attention_mask=attention_mask, labels=labels)
@@ -146,7 +147,7 @@ class NERModel(pl.LightningModule):
         labels_regrouped = [raw_labels[i][mask[i]] for i in range(mask.size(0))]
         hyps_regrouped = [all_predicted_classes[i][mask[i]] for i in range(mask.size(0))]
         data_info = batch_to_info(batch, self.tokenizer, {v: k for k, v in self.label_to_id.items()}, outputs=outputs)
-        with open(Path('/Users/deaxman/Downloads/output_test_eval.jsonl'), 'a') as f:
+        with open(self.working_dir/'output_test_eval.jsonl', 'a') as f:
             f.write('\n'.join([json.dumps(info_sample) for info_sample in data_info]) + "\n")
         return loss, labels_regrouped, hyps_regrouped
 

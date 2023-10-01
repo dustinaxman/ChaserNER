@@ -85,6 +85,7 @@ class SimulatorNERDataModule(LightningDataModule):
 
         working_dir = Path(config_path).parent
 
+
         # Loading data
         train, dev, test = simulate_train_dev_test()
 
