@@ -1,6 +1,8 @@
 
 
-/opt/homebrew/bin/python3 ~/Projects/ChaserNER/src/chaserner/train/__init__.py
+
+export PYTHONPATH=~/Projects/ChaserNER/src/
+/opt/homebrew/bin/python3 ~/Projects/ChaserNER/bin/train.py --save_model_dir ~/test_model_save_dir
 
 
 model_dir=~/Downloads/good_ner_spanbert_model

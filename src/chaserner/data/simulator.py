@@ -1,5 +1,19 @@
 from itertools import product
-from chaserner.data.simulator_constants import SEED, TEMPLATES, TASK_CATALOG, PERSON_CATALOG, DATE_CATALOG, TRAIN_DEV_TEST_SPLIT
+from chaserner.data.simulator_constants import (SEED,
+                                                TRAIN_DEV_TEST_SPLIT,
+                                                TRAIN_TEMPLATES,
+                                                DEV_TEMPLATES,
+                                                TEST_TEMPLATES,
+                                                TRAIN_TASK_CATALOG,
+                                                DEV_TASK_CATALOG,
+                                                TEST_TASK_CATALOG,
+                                                TRAIN_PERSON_CATALOG,
+                                                DEV_PERSON_CATALOG,
+                                                TEST_PERSON_CATALOG,
+                                                TRAIN_DATE_CATALOG,
+                                                DEV_DATE_CATALOG,
+                                                TEST_DATE_CATALOG
+                                                )
 import random
 from chaserner.utils.logger import logger
 
@@ -72,14 +86,30 @@ def generate_sentences(templates, task_catalog, person_catalog, date_catalog):
                             label.append("I-date")
                 else:
                     label.append("O")
-            generated_sentences.append((sentence, dict(task=task, person=person, date=date), label))
+            generated_sentences.append((sentence, dict(task=task if "{task}" in template else None,
+                                                       person=person if "{person}" in template else None,
+                                                       date=date if "{date}" in template else None), label))
     return generated_sentences
 
-def simulate_train_dev_test():
-    train_templates, dev_templates, test_templates = split_into_train_dev_test(TEMPLATES)
-    train_tasks, dev_tasks, test_tasks = split_into_train_dev_test(TASK_CATALOG)
-    train_persons, dev_persons, test_persons = split_into_train_dev_test(PERSON_CATALOG)
-    train_dates, dev_dates, test_dates = split_into_train_dev_test(DATE_CATALOG)
+def simulate_train_dev_test(merge_and_split_dynamically=False):
+    if merge_and_split_dynamically:
+        TEMPLATES = TRAIN_TEMPLATES + DEV_TEMPLATES + TEST_TEMPLATES
+        TASK_CATALOG = TRAIN_TASK_CATALOG + DEV_TASK_CATALOG + TEST_TASK_CATALOG
+        PERSON_CATALOG = TRAIN_PERSON_CATALOG + DEV_PERSON_CATALOG + TEST_PERSON_CATALOG
+        DATE_CATALOG = TRAIN_DATE_CATALOG + DEV_DATE_CATALOG + TEST_DATE_CATALOG
+        train_templates, dev_templates, test_templates = split_into_train_dev_test(TEMPLATES)
+        train_tasks, dev_tasks, test_tasks = split_into_train_dev_test(TASK_CATALOG)
+        train_persons, dev_persons, test_persons = split_into_train_dev_test(PERSON_CATALOG)
+        train_dates, dev_dates, test_dates = split_into_train_dev_test(DATE_CATALOG)
+    else:
+        train_templates, dev_templates, test_templates = TRAIN_TEMPLATES, DEV_TEMPLATES, TEST_TEMPLATES
+        train_tasks, dev_tasks, test_tasks = TRAIN_TASK_CATALOG, DEV_TASK_CATALOG, TEST_TASK_CATALOG
+        train_persons, dev_persons, test_persons = TRAIN_PERSON_CATALOG, DEV_PERSON_CATALOG, TEST_PERSON_CATALOG
+        train_dates, dev_dates, test_dates = TRAIN_DATE_CATALOG, DEV_DATE_CATALOG, TEST_DATE_CATALOG
+    print([len(v) for v in [train_templates, dev_templates, test_templates]])
+    print([len(v) for v in [train_tasks, dev_tasks, test_tasks]])
+    print([len(v) for v in [train_persons, dev_persons, test_persons]])
+    print([len(v) for v in [train_dates, dev_dates, test_dates]])
     train_unrolled_sentences = generate_sentences(train_templates, train_tasks, train_persons, train_dates)
     dev_unrolled_sentences = generate_sentences(dev_templates, dev_tasks, dev_persons, dev_dates)
     test_unrolled_sentences = generate_sentences(test_templates, test_tasks, test_persons, test_dates)

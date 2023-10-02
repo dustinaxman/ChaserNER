@@ -14,6 +14,22 @@ import multiprocessing
 
 NUM_WORKERS = 0#multiprocessing.cpu_count()
 
+def proc_dict(dict_val):
+    return " | ".join([k + ":" + v for k, v in dict_val.items()])
+
+def write_simulated_data(data, write_file_path):
+    with open(write_file_path, "w") as f:
+        f.write("\n".join(["\t".join(
+            [txt_input, proc_dict(labels), " ".join(raw_labels)]) for
+            txt_input, labels, raw_labels in data]))
+
+def read_simulated_data(read_data_path):
+    data = []
+    with open(read_data_path) as f:
+        for line in f:
+            data.append(json.loads(line.strip()))
+    return data
+
 
 class NERDataset(Dataset):
     def __init__(self, data, label_to_id, tokenizer_name='SpanBERT/spanbert-base-cased', max_length=512):
@@ -77,30 +93,24 @@ class NERDataset(Dataset):
 
 
 class SimulatorNERDataModule(LightningDataModule):
-    def __init__(self, batch_size=32, tokenizer_name='SpanBERT/spanbert-base-cased', max_length=512, config_path='/tmp/config.json'):
+    def __init__(self, batch_size=32, train_data_path=None, dev_data_path=None, test_data_path=None, tokenizer_name='SpanBERT/spanbert-base-cased', max_length=512, config_path='/tmp/config.json'):
         super().__init__()
         self.batch_size = batch_size
         self.tokenizer_name = tokenizer_name
         self.max_length = max_length
 
-        working_dir = Path(config_path).parent
-
-
-        # Loading data
-        train, dev, test = simulate_train_dev_test()
-
+        if train_data_path is None or dev_data_path is None or test_data_path is None:
+            working_dir = Path(config_path).parent
+            train_new_sim, dev_new_sim, test_new_sim = simulate_train_dev_test()
+        train = train_new_sim if train_data_path is None else read_simulated_data(train_data_path)
+        dev = dev_new_sim if dev_data_path is None else read_simulated_data(dev_data_path)
+        test = test_new_sim if test_data_path is None else read_simulated_data(test_data_path)
         all_data = train + dev + test
-
         random.shuffle(all_data)
 
-        def proc_dict(dict_val):
-            return " | ".join([k+":"+v for k, v in dict_val.items()])
-
-        with open(working_dir/"simulated_data.txt", "w") as f:
-            #f.write("\n".join(["\t".join([" ".join([txt+"|"+lbl for txt, lbl in zip(txt_input.split(), raw_labels)]), proc_dict(labels)]) for txt_input, labels, raw_labels in all_data]))
-            f.write("\n".join(["\t".join(
-                [txt_input, proc_dict(labels), " ".join(raw_labels)]) for
-                               txt_input, labels, raw_labels in all_data]))
+        write_simulated_data(train, working_dir / "train_data.txt")
+        write_simulated_data(dev, working_dir / "dev_data.txt")
+        write_simulated_data(test, working_dir / "test_data.txt")
 
         all_labels = [label for _, _, sample_labels in train for label in sample_labels]
         unique_labels = set(all_labels)
@@ -122,8 +132,9 @@ class SimulatorNERDataModule(LightningDataModule):
 
         for sample in self.train_dataset:
             pass
-        with open(working_dir/'output_test.jsonl', 'w') as f:
-            f.write('\n'.join([json.dumps(info_sample) for info_sample in self.train_dataset.all_data_info]) + "\n")
+        # with open(working_dir/'output_test.jsonl', 'w') as f:
+        #     f.write('\n'.join([json.dumps(info_sample) for info_sample in self.train_dataset.all_data_info]) + "\n")
+
         self.val_dataset = NERDataset(dev, self.label_to_id, tokenizer_name=self.tokenizer_name,
                                       max_length=self.max_length)
         self.test_dataset = NERDataset(test, self.label_to_id, tokenizer_name=self.tokenizer_name,
@@ -133,20 +144,6 @@ class SimulatorNERDataModule(LightningDataModule):
 
     def setup(self, stage=None):
         pass
-        # # Loading data
-        # train, dev, test = simulate_train_dev_test()
-        #
-        # all_labels = [label for _, _, sample_labels in train for label in sample_labels]
-        # unique_labels = set(all_labels)
-        # self.label_to_id = {label: i for i, label in enumerate(unique_labels)}
-        # #TODO save label to id
-        #
-        # # Creating datasets
-        # self.train_dataset = NERDataset(train, self.label_to_id, tokenizer_name=self.tokenizer_name, max_length=self.max_length)
-        # self.val_dataset = NERDataset(dev, self.label_to_id, tokenizer_name=self.tokenizer_name, max_length=self.max_length)
-        # self.test_dataset = NERDataset(test, self.label_to_id, tokenizer_name=self.tokenizer_name, max_length=self.max_length)
-        # logstr = " ".join([str(len(self.train_dataset)), str(len(self.val_dataset)), str(len(self.test_dataset))])
-        # logger.info(logstr)
 
     def train_dataloader(self):
         logger.info(f"Creating DataLoader with batch size: {self.batch_size}")
