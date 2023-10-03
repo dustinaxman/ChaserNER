@@ -82,6 +82,11 @@ def extract_entities(tokens, labels):
 def join_raw_labels(raw_labels, offset_mapping):
     mask = (offset_mapping[:, :, 0] == 0) & (offset_mapping[:, :, 1] != 0)
     selected_values_list = [raw_labels[i][mask[i]] for i in range(mask.size(0))]
+    if -100 in selected_values_list:
+        print("OMG DOGS")
+        print(offset_mapping)
+        print(raw_labels)
+        print(selected_values_list)
     return selected_values_list
 
 
