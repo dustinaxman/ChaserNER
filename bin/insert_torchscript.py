@@ -2,7 +2,7 @@ from pathlib import Path
 import argparse
 import json
 import torch
-from transformers import BertTokenizerFast
+from transformers import DebertaTokenizerFast
 from chaserner.model import NERModel
 
 EXAMPLE_TEXT = "this is a team effort dustin axman this is really import, please work very hard to finish the report on the operating costs of black mountain economy flies in the rainforest by friday the twenty seventh this is a team effort dustin axman this is really import, please work very hard to finish the report on the operating costs of black mountain economy flies in the rainforest by friday the twenty seventh"
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     ids2lbl = {v: k for k, v in config["lbl2ids"].items()}
     model_path = config_path.parent/config["best_checkpoint"]
     tokenizer_name = config["tokenizer_name"]
-    tokenizer = BertTokenizerFast.from_pretrained(tokenizer_name)
+    tokenizer = DebertaTokenizerFast.from_pretrained(tokenizer_name)
     # TODO: remove the extra args here later!!! for later models
     model = NERModel.load_from_checkpoint(checkpoint_path=model_path, hf_model_name=tokenizer_name, label_to_id=config["lbl2ids"])
     model.eval()

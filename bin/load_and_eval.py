@@ -29,7 +29,7 @@ trainer = Trainer(
 )
 
 
-ner_data_module = SimulatorNERDataModule(batch_size=128, tokenizer_name='SpanBERT/spanbert-base-cased', max_length=32)
+ner_data_module = SimulatorNERDataModule(batch_size=128, tokenizer_name='microsoft/deberta-base', max_length=32)
 
 
 ner_data_module.setup('fit')

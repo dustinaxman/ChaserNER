@@ -92,23 +92,38 @@ def model_output_to_label_tensor(outputs, offset_mapping, ids2lbl):
     return labels_list
 
 
+# def detokenize(tokenized_text):
+#     # Remove [CLS] and [SEP] tokens
+#     tokenized_text = [t for t in tokenized_text.split() if t not in ['[CLS]', '[SEP]']]
+#     # Convert WordPiece tokenization to full words
+#     text = ' '.join(tokenized_text).replace(' ##', '')
+#     # Handle punctuation and certain characters
+#     text = text.replace(" ' s", "'s")  # Handle possessives
+#     for punctuation in [' ,', ' .', ' ?', ' !', ' ;', ' :']:
+#         text = text.replace(punctuation, punctuation[-1])
+#     text = text.replace(" ' re", "'re") # Handle contractions
+#     text = text.replace(" / ", "/")  # Remove spaces around slashes
+#     return text
+
 def detokenize(tokenized_text):
-    # Remove [CLS] and [SEP] tokens
-    tokenized_text = [t for t in tokenized_text.split() if t not in ['[CLS]', '[SEP]']]
-    # Convert WordPiece tokenization to full words
-    text = ' '.join(tokenized_text).replace(' ##', '')
+    # Convert the tokens to text
+    text = ''.join(tokenized_text)
+    # Remove special tokens
+    text = text.replace('[CLS]', '').replace('[SEP]', '')
+    # Handle the space prefix "Ġ" character
+    text = text.replace('Ġ', ' ').strip()
     # Handle punctuation and certain characters
     text = text.replace(" ' s", "'s")  # Handle possessives
     for punctuation in [' ,', ' .', ' ?', ' !', ' ;', ' :']:
         text = text.replace(punctuation, punctuation[-1])
-    text = text.replace(" ' re", "'re") # Handle contractions
+    text = text.replace(" ' re", "'re")  # Handle contractions
     text = text.replace(" / ", "/")  # Remove spaces around slashes
-    return text
+    return text.strip()  # Remove any leading/trailing spaces
 
 
 def batch_to_info(batch, tokenizer, ids2lbl, outputs=None) -> List[str]:
     input_ids = batch['input_ids']
-    raw_labels = batch['labels']
+    raw_labels = batch['labels'] if 'labels' in batch else None
     offset_mapping = batch['offset_mapping'].squeeze(1)
 
     if outputs is not None:
@@ -117,20 +132,25 @@ def batch_to_info(batch, tokenizer, ids2lbl, outputs=None) -> List[str]:
 
     # Convert input_ids to tokens
     tok_texts = [tokenizer.convert_ids_to_tokens(ids) for ids in input_ids]
-
     # Convert tokens to raw_text (by joining tokens and removing special tokens)
-    raw_texts = [detokenize(" ".join(tok_text)) for tok_text in tok_texts]
+    raw_texts = [detokenize(tok_text) for tok_text in tok_texts]
 
     # Convert numerical labels and predictions to their string representations
-    gt_tok_forms = [[ids2lbl[idx.item()] if idx != -100 else "-100" for idx in tensor] for tensor in raw_labels]
+    if raw_labels is None:
+        gt_tok_forms = [["None"]]*len(tok_texts)
+    else:
+        gt_tok_forms = [[ids2lbl[idx.item()] if idx != -100 else "-100" for idx in tensor] for tensor in raw_labels]
     if outputs is not None:
         hyp_tok_forms = [[ids2lbl[idx.item()] for idx in tensor] for tensor in all_predicted_classes]
     else:
         hyp_tok_forms = [["None"]] * len(gt_tok_forms)
 
     # Get normalized forms
-    gt_norm_forms = join_raw_labels(raw_labels, offset_mapping)
-    gt_norm_forms = [[ids2lbl[idx.item()] for idx in tensor] for tensor in gt_norm_forms]
+    if raw_labels is None:
+        gt_norm_forms = [["None"]] * len(gt_tok_forms)
+    else:
+        gt_norm_forms = join_raw_labels(raw_labels, offset_mapping)
+        gt_norm_forms = [[ids2lbl[idx.item()] for idx in tensor] for tensor in gt_norm_forms]
 
     if outputs is not None:
         hyp_norm_forms = join_raw_labels(all_predicted_classes, offset_mapping)

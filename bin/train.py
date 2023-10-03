@@ -9,9 +9,9 @@ def load_args():
 
     parser.add_argument("--save_model_dir",
                         help="Directory to save the model")
-    parser.add_argument("--tokenizer_name", type=str, default="SpanBERT/spanbert-base-cased",
+    parser.add_argument("--tokenizer_name", type=str, default="microsoft/deberta-base",
                         help="Name or path to the tokenizer")
-    parser.add_argument("--hf_model_name", type=str, default="SpanBERT/spanbert-base-cased",
+    parser.add_argument("--hf_model_name", type=str, default="microsoft/deberta-base",
                         help="Name or path to the HuggingFace model")
     parser.add_argument("--max_epochs", type=int, default=5,
                         help="Maximum number of training epochs")

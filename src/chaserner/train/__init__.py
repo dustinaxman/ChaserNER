@@ -12,7 +12,7 @@ current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
 
 
-def train_and_save_model(save_model_dir, tokenizer_name = 'SpanBERT/spanbert-base-cased', hf_model_name = 'SpanBERT/spanbert-base-cased', max_epochs=5, batch_size=128, max_length=64, learning_rate=2e-5, frozen_layers=0, min_delta=0.00, patience=2):
+def train_and_save_model(save_model_dir, tokenizer_name = 'microsoft/deberta-base', hf_model_name = 'microsoft/deberta-base', max_epochs=5, batch_size=128, max_length=64, learning_rate=2e-5, frozen_layers=0, min_delta=0.00, patience=2):
     save_model_dir = Path(save_model_dir)
     config_path = save_model_dir / "config.json"
 

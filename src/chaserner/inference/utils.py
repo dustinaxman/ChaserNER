@@ -1,8 +1,8 @@
 import torch
-from transformers import BertTokenizerFast
+from transformers import DebertaTokenizerFast
 import json
 from chaserner.model import NERModel
-from chaserner.utils import model_output_to_label_tensor, extract_entities
+from chaserner.utils import model_output_to_label_tensor, extract_entities, batch_to_info
 from pathlib import Path
 import time
 
@@ -18,7 +18,7 @@ def load_model(config_path, device):
     max_length = config["max_length"]
     model_path = config_path.parent / config["best_checkpoint"]
     tokenizer_name = config["tokenizer_name"]
-    tokenizer = BertTokenizerFast.from_pretrained(tokenizer_name)
+    tokenizer = DebertaTokenizerFast.from_pretrained(tokenizer_name, add_prefix_space=True)
     # TODO: remove the extra args here later!!! for later models
     if "torchscript_model" in config:
         model_path = config_path.parent / config["torchscript_model"]
@@ -33,24 +33,22 @@ def load_model(config_path, device):
     return model, tokenizer, max_length, ids2lbl
 
 
-def run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl, device):
-    token_lengths = [len(tokenizer.tokenize(txt)) for txt in input_text_list]
-
+def run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl, device, info_log=None):
+    input_text_list = [txt.strip() for txt in input_text_list]
+    token_lengths = [len(tokenizer.encode(txt, add_special_tokens=True)) for txt in input_text_list]
     # Find the maximum token length from the tokenized texts
     max_input_length = max(token_lengths)
 
     max_length = min(max_input_length, max_length)
-
     tokenized_data = tokenizer(
         [txt.split() for txt in input_text_list],
         padding='max_length',
         truncation=True,
         max_length=max_length,
-        return_tensors='pt',
         is_split_into_words=True,
+        return_tensors='pt',
         return_offsets_mapping=True
     ).to(device)
-    print(tokenized_data["input_ids"])
     start_time_model_only = time.time()
     outputs = model(tokenized_data["input_ids"], tokenized_data["attention_mask"])
     total_time = time.time() - start_time_model_only
@@ -60,7 +58,14 @@ def run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl, device
     entity_extracted_samples = [{"input_text": input_text,
                                  "extracted_entities": {k: v for v, k in extract_entities(input_text.split(), labels)}}
                                 for input_text, labels in zip(input_text_list, labels_list)]
-    return entity_extracted_samples
+    if info_log:
+        return entity_extracted_samples, {"model_input_and_output": batch_to_info(tokenized_data,
+                                                                                  tokenizer,
+                                                                                  ids2lbl,
+                                                                                  outputs=outputs),
+                                          "model_runtime": total_time}
+    else:
+        return entity_extracted_samples
 
 
 def input_text_list_to_extracted_entities(input_text_list, config_path, device):

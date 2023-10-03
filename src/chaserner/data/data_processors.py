@@ -4,7 +4,7 @@ import json
 import random
 from pathlib import Path
 from torch.utils.data import Dataset
-from transformers import BertTokenizerFast
+from transformers import DebertaTokenizerFast
 from chaserner.data.simulator import simulate_train_dev_test
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
@@ -15,7 +15,7 @@ import multiprocessing
 NUM_WORKERS = 0#multiprocessing.cpu_count()
 
 def proc_dict(dict_val):
-    return " | ".join([k + ":" + v for k, v in dict_val.items()])
+    return " | ".join([str(k) + ":" + str(v) for k, v in dict_val.items()])
 
 def write_simulated_data(data, write_file_path):
     with open(write_file_path, "w") as f:
@@ -32,10 +32,10 @@ def read_simulated_data(read_data_path):
 
 
 class NERDataset(Dataset):
-    def __init__(self, data, label_to_id, tokenizer_name='SpanBERT/spanbert-base-cased', max_length=512):
+    def __init__(self, data, label_to_id, tokenizer_name='microsoft/deberta-base', max_length=512):
         self.data = data
         self.label_to_id = label_to_id
-        self.tokenizer = BertTokenizerFast.from_pretrained(tokenizer_name)
+        self.tokenizer = DebertaTokenizerFast.from_pretrained(tokenizer_name, add_prefix_space=True)
         self.max_length = max_length
         self.all_data_info = []
 
@@ -93,7 +93,7 @@ class NERDataset(Dataset):
 
 
 class SimulatorNERDataModule(LightningDataModule):
-    def __init__(self, batch_size=32, train_data_path=None, dev_data_path=None, test_data_path=None, tokenizer_name='SpanBERT/spanbert-base-cased', max_length=512, config_path='/tmp/config.json'):
+    def __init__(self, batch_size=32, train_data_path=None, dev_data_path=None, test_data_path=None, tokenizer_name='microsoft/deberta-base', max_length=512, config_path='/tmp/config.json'):
         super().__init__()
         self.batch_size = batch_size
         self.tokenizer_name = tokenizer_name

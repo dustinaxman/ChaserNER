@@ -2,7 +2,7 @@ import torch
 import json
 from pathlib import Path
 import pytorch_lightning as pl
-from transformers import BertForTokenClassification
+from transformers import DebertaForTokenClassification
 from datasets import load_metric
 from chaserner.utils import batch_to_info
 import torch.nn as nn
@@ -86,7 +86,7 @@ class NERModel(pl.LightningModule):
         num_labels = len([k for k in label_to_id.keys() if k not in []])
         self.label_to_id = label_to_id
         self.tokenizer = tokenizer
-        self.model = BertForTokenClassification.from_pretrained(hf_model_name, num_labels=num_labels)
+        self.model = DebertaForTokenClassification.from_pretrained(hf_model_name, num_labels=num_labels)
         self.freeze_encoder_layers(frozen_layers)
         self.learning_rate = learning_rate
         self.val_outputs = []
@@ -154,9 +154,14 @@ class NERModel(pl.LightningModule):
     def proc_loss_lbls_hyps_get_metrics(self, loss_lbl_hyps):
         avg_loss = torch.stack([x['test_loss'] for x in loss_lbl_hyps]).mean()
         id2lbl = {v: k for k, v in self.label_to_id.items()}
-        unrolled_lbls = [[id2lbl[s.item()] for s in sample] for batch in loss_lbl_hyps for sample in batch['labels']]
-        unrolled_hyps = [[id2lbl[s.item()] for s in sample] for batch in loss_lbl_hyps for sample in batch['hypotheses']]
-        seqeval_results = seqeval_metric.compute(predictions=unrolled_hyps, references=unrolled_lbls, mode="strict")
+        try:
+            unrolled_lbls = [[id2lbl[s.item()] for s in sample] for batch in loss_lbl_hyps for sample in batch['labels']]
+            unrolled_hyps = [[id2lbl[s.item()] for s in sample] for batch in loss_lbl_hyps for sample in batch['hypotheses']]
+            seqeval_results = seqeval_metric.compute(predictions=unrolled_hyps, references=unrolled_lbls, mode="strict")
+        except ValueError as e:
+            print(str(unrolled_hyps))
+            print(str(unrolled_lbls))
+            raise e
         metrics = {
             "precision": seqeval_results["overall_precision"],
             "recall": seqeval_results["overall_recall"],
@@ -204,7 +209,7 @@ class NERModel(pl.LightningModule):
         """
         Freeze the first `num_layers_to_freeze` of the BERT model.
         """
-        for layer in self.model.bert.encoder.layer[:num_layers_to_freeze]:
+        for layer in self.model.deberta.encoder.layer[:num_layers_to_freeze]:
             for param in layer.parameters():
                 param.requires_grad = False
 
