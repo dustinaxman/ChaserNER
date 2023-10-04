@@ -21,7 +21,7 @@ DEV_TEMPLATES = [
     "Take note, {person}. The deadline for {task} is {date}.",
     "{person}, can you {task}?",
     "{person} will {task} before {date}",
-    "{person}, just a heads up! We're hoping the task to {task} will be done by {date}."
+    "{person}, just a heads up! We're hoping the task to {task} will be done by {date}.",
     "{person}, can you {task} and have that finalized by {date}?"]
 TEST_TEMPLATES = [
     "please {task}",
@@ -131,7 +131,7 @@ DEV_TASK_CATALOG = [
                 "finish the video tutorial for the new users",
                 "create a database schema for the inventory system",
                 "do the evaluation of our competitors' products",
-                "evaluate our competitors products"
+                "evaluate our competitors products",
                 "debug log for the app crashes last week",
                 "maintain the daily webinars",
                 "debug slack channel issues",
