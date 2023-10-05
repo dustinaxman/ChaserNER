@@ -52,9 +52,6 @@ aws cloudformation create-stack --stack-name chaser-ner-host --template-body fil
 
 
 
-
-
-
 API_ENDPOINT=$(aws cloudformation describe-stacks --stack-name chaser-ner-host --query 'Stacks[0].Outputs[?OutputKey==`ApiEndpoint`].OutputValue' --output text | sed 's/\/$//')
 echo $API_ENDPOINT
 
@@ -70,7 +67,10 @@ echo "API KEY: ${API_KEY_VALUE}"
 echo "API ENDPOINT: ${API_ENDPOINT}"
 
 
-curl -X POST ${URL} -H "Content-Type: application/json" -H "x-api-key: ${API_KEY}" -d '{"text": "dustin please finish the report on profit by 10/21"}'
+curl -X POST ${API_ENDPOINT} -H "Content-Type: application/json" -H "x-api-key: ${API_KEY}" -d '{"text": "dustin please finish the report on profit by 10/21"}'
+
+curl -X POST ${API_ENDPOINT} -H "Content-Type: application/json" -H "x-api-key: ${API_KEY}" -d '{"text": "eat the apple dustin, also can you change the tire"}'
+
 
 
 

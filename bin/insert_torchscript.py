@@ -23,9 +23,9 @@ if __name__ == "__main__":
     ids2lbl = {v: k for k, v in config["lbl2ids"].items()}
     model_path = config_path.parent/config["best_checkpoint"]
     tokenizer_name = config["tokenizer_name"]
-    tokenizer = DebertaTokenizerFast.from_pretrained(tokenizer_name)
+    tokenizer = DebertaTokenizerFast.from_pretrained(tokenizer_name, add_prefix_space=True)
     # TODO: remove the extra args here later!!! for later models
-    model = NERModel.load_from_checkpoint(checkpoint_path=model_path, hf_model_name=tokenizer_name, label_to_id=config["lbl2ids"])
+    model = NERModel.load_from_checkpoint(checkpoint_path=model_path, hf_model_name=tokenizer_name, label_to_id=config["lbl2ids"], map_location="cpu", strict=False)
     model.eval()
     model = model.to('cpu')
     tokenized_data = tokenizer(
