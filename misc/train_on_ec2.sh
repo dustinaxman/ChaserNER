@@ -23,7 +23,7 @@ python3 ~/ChaserNER/bin/train.py --save_model_dir ~/test_model_save_dir
 
 #--tokenizer_name --hf_model_name --max_epochs 5 --batch_size 128 --max_length 64 --learning_rate 0.00002 --frozen_layers 0 --min_delta 0.0 --patience 2
 
-rm -r ~/Downloads/remote_trained_model/
+rm -r ~/Downloads/remote_trained_model_10_5/
 rsync -avz -e "ssh -i ~/Downloads/main.pem -o StrictHostKeyChecking=no" ec2-user@${public_ip}:~/test_model_save_dir/ ~/Downloads/remote_trained_model/
 
 
