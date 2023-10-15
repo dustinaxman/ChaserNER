@@ -56,6 +56,7 @@ def run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl, device
     print(f"MODEL ONLY: {total_time}")
     # print(outputs)
     labels_list = model_output_to_label_tensor(outputs, tokenized_data["offset_mapping"], ids2lbl)
+
     entity_extracted_samples = [{"input_text": input_text,
                                  "extracted_entities": {k: v for v, k in extract_entities(input_text.split(), labels)}}
                                 for input_text, labels in zip(input_text_list, labels_list)]

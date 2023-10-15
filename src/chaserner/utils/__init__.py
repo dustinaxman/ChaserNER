@@ -44,6 +44,9 @@ class LFUCache:
         self.freq_list.setdefault(1, []).append(key)
         self.min_freq = 1
 
+
+
+
 def extract_entities(tokens, labels):
     entities = []
     entity = []
@@ -71,10 +74,52 @@ def extract_entities(tokens, labels):
             if entity:
                 entities.append((' '.join(entity), entity_type))
                 entity = []
-
     # Catch any remaining entities
     if entity:
         entities.append((' '.join(entity), entity_type))
+
+
+#if its exclusively one continuous group of itask or btask AND the rest of the samples are not O
+    last_token_task = False
+    one_time_flag = True
+    more_than_one_task_group = False
+    corrected_task_tokens = []
+    for token, label in zip(tokens, labels):
+        if label in ["B-task", "I-task"]:
+            if one_time_flag or last_token_task:
+                one_time_flag = False
+                last_token_task = True
+                corrected_task_tokens.append(token)
+            else:
+                more_than_one_task_group = True
+        else:
+            last_token_task = False
+
+    corrected_task = " ".join(corrected_task_tokens)
+
+    O_len = len([l for l in labels if l == "O"])
+    date_len = len([l for l in labels if l in ["B-date", "I-date"]])
+    person_len = len([l for l in labels if l in ["B-person", "I-person"]])
+    more_O_than_person_or_date = (O_len > date_len) and (O_len > person_len)
+
+    if more_than_one_task_group or more_O_than_person_or_date:
+        corrected_task = " ".join(tokens)
+
+    post_processed_entities = []
+    for entity, entity_type in entities:
+        if entity_type == "task":
+            entity_type = "subtask"
+            post_processed_entities.append((entity, entity_type))
+    post_processed_entities.append((corrected_task, "task"))
+
+
+
+
+                # if there is EXCLUSIVELY O, B-Date, or I-Date on the left or right, remove them
+    # if there is EXCLUSIVELY O, B-Person, or I-Person on the left or right, remove them
+
+    # set "task" to "subtask" and set "task" as the result of above
+
 
     return entities
 
