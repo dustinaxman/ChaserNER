@@ -1,5 +1,6 @@
 from typing import List, Dict
 import torch
+import copy
 
 class LFUCache:
     def __init__(self, capacity: int):
@@ -45,6 +46,39 @@ class LFUCache:
         self.min_freq = 1
 
 
+def strip_date_person_from_right(entities):
+    # THEN
+    # return the set of entity blocks up until that point
+    head_entities = []
+    tail_entities = []
+    tail_flag = False
+    for entity in entities:
+        if not tail_flag:
+            head_entities.append(entity)
+            if entity[1] == "task":
+                tail_flag = True
+        else:
+            tail_entities.append(entity)
+    print("what")
+    print(entities)
+    print(tail_entities)
+    num_person_blocks = len([entity for entity in tail_entities if entity[1] == "person"])
+    num_date_blocks = len([entity for entity in tail_entities if entity[1] == "date"])
+    num_other_blocks = len([entity for entity in tail_entities if entity[1] == "O"])
+    len_person_blocks = sum([len(entity[0].split()) for entity in tail_entities if entity[1] == "person"])
+    len_date_blocks = sum([len(entity[0].split()) for entity in tail_entities if entity[1] == "date"])
+    len_other_blocks = sum([len(entity[0].split()) for entity in tail_entities if entity[1] == "O"])
+    print(num_person_blocks, num_date_blocks, num_other_blocks, len_person_blocks, len_date_blocks, len_other_blocks)
+    print((num_date_blocks == 1 and num_person_blocks == 0 and len_other_blocks <= len_date_blocks))
+    print((num_date_blocks == 0 and num_person_blocks == 1 and len_other_blocks <= len_person_blocks))
+    # if there is EXACTLY one person or one date block AND there is <= 1 OTHER block
+    # if the OTHER block is not longer than the date or person block
+    if num_other_blocks <= 1 and \
+        ((num_date_blocks == 1 and num_person_blocks == 0 and len_other_blocks <= len_date_blocks) or
+         (num_date_blocks == 0 and num_person_blocks == 1 and len_other_blocks <= len_person_blocks)):
+        return head_entities
+    else:
+        return entities
 
 
 def extract_entities(tokens, labels):
@@ -71,57 +105,42 @@ def extract_entities(tokens, labels):
                 entity_type = current_entity_type
                 entity.append(token)
         else:
-            if entity:
-                entities.append((' '.join(entity), entity_type))
-                entity = []
+            current_entity_type = "O"
+            if current_entity_type == entity_type:
+                entity.append(token)
+            else:
+                if entity:
+                    entities.append((' '.join(entity), entity_type))
+                    entity = []
+                entity_type = current_entity_type
+                entity.append(token)
     # Catch any remaining entities
     if entity:
         entities.append((' '.join(entity), entity_type))
 
+    # There is only one task block
 
-#if its exclusively one continuous group of itask or btask AND the rest of the samples are not O
-    last_token_task = False
-    one_time_flag = True
-    more_than_one_task_group = False
-    corrected_task_tokens = []
-    for token, label in zip(tokens, labels):
-        if label in ["B-task", "I-task"]:
-            if one_time_flag or last_token_task:
-                one_time_flag = False
-                last_token_task = True
-                corrected_task_tokens.append(token)
-            else:
-                more_than_one_task_group = True
-        else:
-            last_token_task = False
+    entities_copy = copy.deepcopy(entities)
 
-    corrected_task = " ".join(corrected_task_tokens)
+    if len([entity for entity in entities if entity[1] == "task"]) == 1:
+        # for left and right
+        entities_copy = strip_date_person_from_right(entities_copy)
+        entities_person_date_strip = strip_date_person_from_right(entities_copy[::-1])[::-1]
+    else:
+        entities_person_date_strip = entities_copy
 
-    O_len = len([l for l in labels if l == "O"])
-    date_len = len([l for l in labels if l in ["B-date", "I-date"]])
-    person_len = len([l for l in labels if l in ["B-person", "I-person"]])
-    more_O_than_person_or_date = (O_len > date_len) and (O_len > person_len)
-
-    if more_than_one_task_group or more_O_than_person_or_date:
-        corrected_task = " ".join(tokens)
+    corrected_task = " ".join([entity[0].strip(" ") for entity in entities_person_date_strip])
 
     post_processed_entities = []
     for entity, entity_type in entities:
         if entity_type == "task":
             entity_type = "subtask"
             post_processed_entities.append((entity, entity_type))
+        else:
+            post_processed_entities.append((entity, entity_type))
     post_processed_entities.append((corrected_task, "task"))
 
-
-
-
-                # if there is EXCLUSIVELY O, B-Date, or I-Date on the left or right, remove them
-    # if there is EXCLUSIVELY O, B-Person, or I-Person on the left or right, remove them
-
-    # set "task" to "subtask" and set "task" as the result of above
-
-
-    return entities
+    return post_processed_entities
 
 
 def join_raw_labels(raw_labels, offset_mapping):
