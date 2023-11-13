@@ -1,6 +1,8 @@
 from typing import List, Dict
 import torch
 import copy
+from collections import defaultdict
+import torch.nn.functional as F
 
 class LFUCache:
     def __init__(self, capacity: int):
@@ -45,6 +47,11 @@ class LFUCache:
         self.freq_list.setdefault(1, []).append(key)
         self.min_freq = 1
 
+def process_entities_to_dict(entities):
+    entity_dict = defaultdict(list)
+    for v, k in entities:
+        entity_dict[k].append(v)
+    return entity_dict
 
 def strip_date_person_from_right(entities):
     # THEN
@@ -146,14 +153,24 @@ def extract_entities(tokens, labels):
 def join_raw_labels(raw_labels, offset_mapping):
     mask = (offset_mapping[:, :, 0] == 0) & (offset_mapping[:, :, 1] != 0)
     selected_values_list = [raw_labels[i][mask[i]] for i in range(mask.size(0))]
-    # for tensor in selected_values_list:
-    #     if -100 in [idx.item() for idx in tensor]:
-    #         print("OMG DOGS")
-    #         print(offset_mapping)
-    #         print(raw_labels)
-    #         print(selected_values_list)
-    #         print([idx.item() for idx in tensor])
     return selected_values_list
+
+
+def get_perplexity(outputs, ids2lbl):
+    log_probs = F.log_softmax(outputs["logits"], dim=-1)
+    raw_labels = torch.argmax(outputs["logits"], dim=-1)
+    label_log_probs = log_probs.gather(dim=-1, index=raw_labels.unsqueeze(-1)).squeeze(-1)
+    unique_labels = raw_labels.unique()
+    perplexities = {}
+    for label in unique_labels:
+        mask = raw_labels == label
+        mean_log_prob = label_log_probs[mask].mean().item()
+        perplexities[ids2lbl[label.item()]] = torch.exp(-torch.tensor(mean_log_prob)).item()
+
+    # Overall perplexity
+    overall_mean_log_prob = label_log_probs.mean().item()
+    overall_perplexity = torch.exp(-torch.tensor(overall_mean_log_prob)).item()
+    return perplexities, overall_perplexity
 
 
 def model_output_to_label_tensor(outputs, offset_mapping, ids2lbl):
@@ -196,7 +213,7 @@ def batch_to_info(batch, tokenizer, ids2lbl, outputs=None) -> List[str]:
     input_ids = batch['input_ids']
     raw_labels = batch['labels'] if 'labels' in batch else None
     offset_mapping = batch['offset_mapping'].squeeze(1)
-
+    log_probs_all_samples = F.log_softmax(outputs["logits"], dim=-1)
     if outputs is not None:
         logits = outputs["logits"]
         all_predicted_classes = torch.argmax(logits, dim=-1)
@@ -230,17 +247,18 @@ def batch_to_info(batch, tokenizer, ids2lbl, outputs=None) -> List[str]:
         hyp_norm_forms = [["None"]] * len(gt_norm_forms)
 
     logged_info = []
-    for raw_text, tok_text, gt_tok_form, gt_norm_form, hyp_tok_form, hyp_norm_form in zip(raw_texts, tok_texts,
+    for raw_text, tok_text, gt_tok_form, gt_norm_form, hyp_tok_form, hyp_norm_form, log_probs in zip(raw_texts, tok_texts,
                                                                                           gt_tok_forms, gt_norm_forms,
                                                                                           hyp_tok_forms,
-                                                                                          hyp_norm_forms):
+                                                                                          hyp_norm_forms, log_probs_all_samples):
         entry = {
             "raw_text": raw_text,
             "tok_text": ' '.join(tok_text),
             "gt_tok_form": ' '.join(gt_tok_form),
             "gt_norm_form": ' '.join(gt_norm_form),
             "hyp_tok_form": ' '.join(hyp_tok_form),
-            "hyp_norm_form": ' '.join(hyp_norm_form)
+            "hyp_norm_form": ' '.join(hyp_norm_form),
+            "log_probs": log_probs
         }
         logged_info.append(entry)
 

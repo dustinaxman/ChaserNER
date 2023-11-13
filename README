@@ -40,7 +40,7 @@ docker login -u AWS -p $(aws ecr get-login-password --region us-east-1) ${ecr_ur
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ecr_uri
 
 
-docker tag good_ner_spanbert_model_image_2 ${ecr_uri}/chaser_ner:latest
+docker tag ${torchserve_image_name} ${ecr_uri}/chaser_ner:latest
 docker push ${ecr_uri}/chaser_ner:latest
 
 
