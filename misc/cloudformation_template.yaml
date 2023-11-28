@@ -1,12 +1,14 @@
 Resources:
   EC2Instance:
     Type: AWS::EC2::Instance
+    DependsOn: [InternetGateway, GatewayAttachment, RouteTable, Route, InstanceSecurityGroup, SubnetA]
     Properties:
       InstanceType: c7g.large
       ImageId: ami-0b9ce70cf1bc24fc3
       IamInstanceProfile: !Ref EC2InstanceProfile
       SecurityGroupIds:
         - !Ref InstanceSecurityGroup
+      SubnetId: !Ref SubnetA
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
@@ -22,7 +24,7 @@ Resources:
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      VpcId: vpc-40cb6738
+      VpcId: !Ref MyVPC
       GroupDescription: Enable ports for TorchServe
       SecurityGroupIngress:
       - IpProtocol: tcp
@@ -148,6 +150,121 @@ Resources:
       KeyId: !Ref ApiKey
       KeyType: "API_KEY"
       UsagePlanId: !Ref UsagePlan
+
+  MyVPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: "172.31.0.0/16"
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+
+  # Subnets
+  SubnetA:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "172.31.0.0/20"
+      AvailabilityZone: "us-east-1b"
+      MapPublicIpOnLaunch: true
+  SubnetB:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "172.31.80.0/20"
+      AvailabilityZone: "us-east-1c"
+      MapPublicIpOnLaunch: true
+  SubnetC:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "172.31.48.0/20"
+      AvailabilityZone: "us-east-1e"
+      MapPublicIpOnLaunch: true
+  SubnetD:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "172.31.64.0/20"
+      AvailabilityZone: "us-east-1f"
+      MapPublicIpOnLaunch: true
+  SubnetE:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "172.31.16.0/20"
+      AvailabilityZone: "us-east-1d"
+      MapPublicIpOnLaunch: true
+  SubnetF:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "172.31.32.0/20"
+      AvailabilityZone: "us-east-1a"
+      MapPublicIpOnLaunch: true
+
+  InternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+
+  GatewayAttachment:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      VpcId: !Ref MyVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  RouteTable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref MyVPC
+
+  Route:
+    Type: "AWS::EC2::Route"
+    DependsOn: [InternetGateway, RouteTable]
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteTableAssociationA:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    DependsOn: [SubnetA, RouteTable]
+    Properties:
+      SubnetId: !Ref SubnetA
+      RouteTableId: !Ref RouteTable
+
+  SubnetRouteTableAssociationB:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    DependsOn: [SubnetB, RouteTable]
+    Properties:
+      SubnetId: !Ref SubnetB
+      RouteTableId: !Ref RouteTable
+
+  SubnetRouteTableAssociationC:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    DependsOn: [SubnetC, RouteTable]
+    Properties:
+      SubnetId: !Ref SubnetC
+      RouteTableId: !Ref RouteTable
+
+  SubnetRouteTableAssociationD:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    DependsOn: [SubnetD, RouteTable]
+    Properties:
+      SubnetId: !Ref SubnetD
+      RouteTableId: !Ref RouteTable
+
+  SubnetRouteTableAssociationE:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    DependsOn: [SubnetE, RouteTable]
+    Properties:
+      SubnetId: !Ref SubnetE
+      RouteTableId: !Ref RouteTable
+
+  SubnetRouteTableAssociationF:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    DependsOn: [SubnetF, RouteTable]
+    Properties:
+      SubnetId: !Ref SubnetF
+      RouteTableId: !Ref RouteTable
 
 Outputs:
   ApiEndpoint:
