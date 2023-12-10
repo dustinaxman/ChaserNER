@@ -1,27 +1,28 @@
- # ChaserNER Project Deployment Guide
+# ChaserNER Project Deployment Guide
 
- This guide details the steps for deploying the ChaserNER model using Docker and AWS services.
- Please keep in mind that you should ensure that your aws account has an ec2 keypair called "main" 
- and has an ECR repo with this id: 198449958201.dkr.ecr.us-east-1.amazonaws.com.  If you do not have this, 
- please change this to the repo you would like to use (run aws ecr describe-repositories to see your repos)
+This guide details the steps for deploying the ChaserNER model using Docker and AWS services.
+Please keep in mind that you should ensure that your aws account has an ec2 keypair called "main" 
+and has an ECR repo with this id: 198449958201.dkr.ecr.us-east-1.amazonaws.com.  If you do not have this, 
+please change this to the repo you would like to use (run aws ecr describe-repositories to see your repos)
+Finally, make sure you have enough vcpus on your aws account to spin up one g5.xlarge and at least one c7g.large.
 
- ## Setting Up Environment
+## Setting Up Environment
 
- Before you begin, set the `PYTHONPATH` to the source directory of the ChaserNER project:
+Before you begin, set the `PYTHONPATH` to the source directory of the ChaserNER project:
 
- ```bash
- export PYTHONPATH=~/Projects/ChaserNER/src/
- ```
+```bash
+export PYTHONPATH=~/Projects/ChaserNER/src/
+```
 
- ## Training the Model
+## Training the Model
 
- Run the training script as follows:
+Run the training script as follows:
 
- ```bash
- /opt/homebrew/bin/python3 ~/Projects/ChaserNER/bin/train.py --save_model_dir ~/test_model_save_dir
- ```
+```bash
+/opt/homebrew/bin/python3 ~/Projects/ChaserNER/bin/train.py --save_model_dir ~/test_model_save_dir
+```
 
- ## Preparing Model Deployment
+## Preparing Model Deployment
 
 Set up the working directory and prepare the model directory:
 
