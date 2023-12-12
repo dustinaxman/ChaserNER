@@ -37,7 +37,6 @@ sudo yum update -y
 sudo yum install python3-pip -y
 python3 -m pip install transformers pytorch-lightning datasets pytest seqeval lightning_lite torch torchvision
 python3 -m pip install 'urllib3<2.0'
-
 screen -D -R train
 export PYTHONPATH=~/ChaserNER/src/
 python3 ~/ChaserNER/bin/train.py --save_model_dir ~/test_model_save_dir
@@ -46,6 +45,7 @@ exit
 ```
 
 ## Preparing Model Deployment
+Run this on your local laptop
 
 Set up the working directory and prepare the model directory:
 
