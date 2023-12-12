@@ -16,10 +16,33 @@ export PYTHONPATH=~/Projects/ChaserNER/src/
 
 ## Training the Model
 
-Run the training script as follows:
+### Spin up EC2 and SSH in
 
 ```bash
-/opt/homebrew/bin/python3 ~/Projects/ChaserNER/bin/train.py --save_model_dir ~/test_model_save_dir
+instance_info=$(aws ec2 run-instances --image-id ami-0f837acd9af5d0944 --count 1 --instance-type g5.xlarge --key-name main --security-group-ids sg-079c29fe50f0767d7)
+instance_id=$(echo ${instance_info} | jq -r .Instances[0].InstanceId)
+aws ec2 wait instance-running --instance-ids ${instance_id}
+public_ip=$(aws ec2 describe-instances --instance-ids ${instance_id} | jq -r .Reservations[0].Instances[0].PublicIpAddress)
+
+rsync -avz -e "ssh -i ~/Downloads/main.pem -o StrictHostKeyChecking=no" ~/Projects/ChaserNER/ ec2-user@${public_ip}:~/ChaserNER/
+
+ssh -i "~/Downloads/main.pem" -o "StrictHostKeyChecking=no" ec2-user@${public_ip}
+```
+
+
+### Train model 
+Run this on EC2 after SSHing in above
+```bash
+sudo yum update -y
+sudo yum install python3-pip -y
+python3 -m pip install transformers pytorch-lightning datasets pytest seqeval lightning_lite torch torchvision
+python3 -m pip install 'urllib3<2.0'
+
+screen -D -R train
+export PYTHONPATH=~/ChaserNER/src/
+python3 ~/ChaserNER/bin/train.py --save_model_dir ~/test_model_save_dir
+# After training finishes
+exit
 ```
 
 ## Preparing Model Deployment
@@ -33,6 +56,14 @@ model_dir=${WORKING_DIR}/${expname}_model
 model_dir="${model_dir%/}"
 torchserve_image_name=${expname}_image
 docker_container_name=${expname}_container
+```
+
+### Pull the model down locally and delete the instance
+```bash
+rm -r ${model_dir}
+rsync -avz -e "ssh -i ~/Downloads/main.pem -o StrictHostKeyChecking=no" ec2-user@${public_ip}:~/test_model_save_dir/ ${model_dir}/
+aws ec2 terminate-instances --instance-ids ${instance_id}
+aws ec2 wait instance-terminated --instance-ids ${instance_id}
 ```
 
 ### Adding torchserve (and torchscript)
