@@ -78,32 +78,11 @@ Add torchserve (creates the mar file in the dir) and optionall torchscript (jit)
 
 ### Building the Docker Image
 
-Use the following command to build a Docker image for the TorchServe service:
+Use the following command to build a Docker image for the TorchServe service. 
+To test locally, see "LOCAL_TESTING_README.md"
 
 ```bash
 docker build -t ${torchserve_image_name} -f ${model_dir}/Dockerfile ${model_dir}/
-```
-
-## Testing the Docker Container Locally
-
-To test the Docker container offline, run the container and test it with a sample request:
-
-```bash
-docker run -p 8080:8080 -p 8081:8081 --name ${docker_container_name} ${torchserve_image_name}
-
-curl -X POST http://localhost:8080/predictions/chaser_ner_model \
-     -H "Content-Type: application/json" \
-     -d '{"text": "dustin please finish the report on profit by 10/21"}'
-```
-
-### Monitoring the Docker Container
-
-To monitor the Docker container, use the following commands:
-
-```bash
-docker stats ${docker_container_name}
-docker inspect -f '{{.HostConfig.Memory}}' ${docker_container_name}
-docker top ${docker_container_name}
 ```
 
 ## Pushing the Container to Amazon ECR
