@@ -6,6 +6,7 @@ and has an ECR repo with this id: 198449958201.dkr.ecr.us-east-1.amazonaws.com.
 
 If you do not have this, 
 please change this to the repo you would like to use (run aws ecr describe-repositories to see your repos)
+Also add "model_repo" as a bucket to the AWS account if you don't have it.
 Finally, make sure you have enough vcpus on your aws account to spin up one g5.xlarge and at least one c7g.large.
 
 ## Training the Model
@@ -32,6 +33,7 @@ python3 -m pip install 'urllib3<2.0'
 screen -D -R train
 export PYTHONPATH=~/ChaserNER/src/
 python3 ~/ChaserNER/bin/train.py --save_model_dir ~/test_model_save_dir
+#vim ~/test_model_save_dir/DESCRIPTION.txt
 ```
 
 ### Adding torchserve (and torchscript)
@@ -50,7 +52,7 @@ Set up the working directory and prepare the model directory:
 
 ```bash
 WORKING_DIR=~/Downloads
-expname=model_deployment_12_9_23
+expname=model_deployment_12_12_23_a6e50694ad7d184fb9c07f68d9b4584a08d40af2_v1.0.0
 model_dir=${WORKING_DIR}/${expname}_model
 model_dir="${model_dir%/}"
 torchserve_image_name=${expname}_image
@@ -63,6 +65,11 @@ rm -r ${model_dir}
 rsync -avz -e "ssh -i ~/Downloads/main.pem -o StrictHostKeyChecking=no" ec2-user@${public_ip}:~/test_model_save_dir/ ${model_dir}/
 aws ec2 terminate-instances --instance-ids ${instance_id}
 aws ec2 wait instance-terminated --instance-ids ${instance_id}
+```
+
+### Push to s3
+```bash
+aws s3 cp -r ${model_dir}/ s3://chaser-model-repo/${expname}/
 ```
 
 ### Building the Docker Image
