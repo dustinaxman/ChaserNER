@@ -213,15 +213,18 @@ def batch_to_info(batch, tokenizer, ids2lbl, outputs=None) -> List[str]:
     input_ids = batch['input_ids']
     raw_labels = batch['labels'] if 'labels' in batch else None
     offset_mapping = batch['offset_mapping'].squeeze(1)
-    log_probs_all_samples = F.log_softmax(outputs["logits"], dim=-1)
-    if outputs is not None:
-        logits = outputs["logits"]
-        all_predicted_classes = torch.argmax(logits, dim=-1)
 
     # Convert input_ids to tokens
     tok_texts = [tokenizer.convert_ids_to_tokens(ids) for ids in input_ids]
     # Convert tokens to raw_text (by joining tokens and removing special tokens)
     raw_texts = [detokenize(tok_text) for tok_text in tok_texts]
+
+    if outputs is not None:
+        log_probs_all_samples = F.log_softmax(outputs["logits"], dim=-1).cpu().numpy().astype(float).tolist()
+        logits = outputs["logits"]
+        all_predicted_classes = torch.argmax(logits, dim=-1)
+    else:
+        log_probs_all_samples = [None for i in tok_texts]
 
     # Convert numerical labels and predictions to their string representations
     if raw_labels is None:
