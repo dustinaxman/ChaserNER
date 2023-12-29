@@ -1,25 +1,34 @@
 # ChaserNER Project Deployment Guide
 
 This guide details the steps for deploying the ChaserNER model using Docker and AWS services.
-Please keep in mind that you should ensure that your aws account has an ec2 keypair called "main" 
+Please keep in mind that you should ensure that your aws account has an ec2 keypair called "main" and pem file main_chaser.pem
 and has an ECR repo with this id: 198449958201.dkr.ecr.us-east-1.amazonaws.com. 
 
 If you do not have this, 
 please change this to the repo you would like to use (run aws ecr describe-repositories to see your repos)
 Also add "model_repo" as a bucket to the AWS account if you don't have it.
 Finally, make sure you have enough vcpus on your aws account to spin up one g5.xlarge and at least one c7g.large.
+```bash
+default_vpcid=$(aws ec2 describe-vpcs --filters "Name=is-default,Values=true" --query "Vpcs[*].{ID:VpcId}" --output text)
+aws ec2 create-security-group --group-name ssh_and_scp --description "ssh_and_scp" --vpc-id ${default_vpcid}
+sg_name=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=ssh_and_scp" --query "SecurityGroups[*].{ID:GroupId}" --output text)
+your_computer_ip=$(curl ifconfig.me)
+aws ec2 authorize-security-group-ingress --group-id ${sg_name} --protocol tcp --port 22 --cidr ${your_computer_ip}/32
+aws ec2 authorize-security-group-ingress --group-id ${sg_name} --protocol tcp --port 873 --cidr ${your_computer_ip}/32
+```
+export AWS_PROFILE=chaser
 
 ## Training the Model
 
 ### Spin up EC2 and SSH in
 
 ```bash
-instance_info=$(aws ec2 run-instances --image-id ami-0f837acd9af5d0944 --count 1 --instance-type g5.xlarge --key-name main --security-group-ids sg-079c29fe50f0767d7)
+instance_info=$(aws ec2 run-instances --image-id ami-0f837acd9af5d0944 --count 1 --instance-type g5.xlarge --key-name main --security-group-ids ${sg_name})
 instance_id=$(echo ${instance_info} | jq -r .Instances[0].InstanceId)
 aws ec2 wait instance-running --instance-ids ${instance_id}
 public_ip=$(aws ec2 describe-instances --instance-ids ${instance_id} | jq -r .Reservations[0].Instances[0].PublicIpAddress)
-rsync -avz -e "ssh -i ~/Downloads/main.pem -o StrictHostKeyChecking=no" ~/Projects/ChaserNER/ ec2-user@${public_ip}:~/ChaserNER/
-ssh -i "~/Downloads/main.pem" -o "StrictHostKeyChecking=no" ec2-user@${public_ip}
+rsync -avz -e "ssh -i ~/Downloads/main_chaser.pem -o StrictHostKeyChecking=no" ~/Projects/ChaserNER/ ec2-user@${public_ip}:~/ChaserNER/
+ssh -i "~/Downloads/main_chaser.pem" -o "StrictHostKeyChecking=no" ec2-user@${public_ip}
 ```
 
 
@@ -62,7 +71,7 @@ docker_container_name=${expname}_container
 ### Pulling the model down locally and delete the instance
 ```bash
 rm -r ${model_dir}
-rsync -avz -e "ssh -i ~/Downloads/main.pem -o StrictHostKeyChecking=no" ec2-user@${public_ip}:~/test_model_save_dir/ ${model_dir}/
+rsync -avz -e "ssh -i ~/Downloads/main_chaser.pem -o StrictHostKeyChecking=no" ec2-user@${public_ip}:~/test_model_save_dir/ ${model_dir}/
 aws ec2 terminate-instances --instance-ids ${instance_id}
 aws ec2 wait instance-terminated --instance-ids ${instance_id}
 ```
