@@ -220,9 +220,10 @@ def batch_to_info(batch, tokenizer, ids2lbl, outputs=None) -> List[str]:
     raw_texts = [detokenize(tok_text) for tok_text in tok_texts]
 
     if outputs is not None:
-        log_probs_all_samples = F.log_softmax(outputs["logits"], dim=-1).cpu().numpy().astype(float).tolist()
-        logits = outputs["logits"]
-        all_predicted_classes = torch.argmax(logits, dim=-1)
+        # log_probs_all_samples = F.log_softmax(outputs["logits"], dim=-1).cpu().numpy().astype(float).tolist()
+        # logits = outputs["logits"]
+        # all_predicted_classes = torch.argmax(logits, dim=-1)
+        log_probs_all_samples = [None for i in tok_texts]
     else:
         log_probs_all_samples = [None for i in tok_texts]
 
