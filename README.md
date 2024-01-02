@@ -42,7 +42,7 @@ python3 -m pip install transformers pytorch-lightning datasets pytest seqeval li
 python3 -m pip install 'urllib3<2.0'
 screen -D -R train
 export PYTHONPATH=~/ChaserNER/src/
-python3 ~/ChaserNER/bin/train.py --save_model_dir ~/test_model_save_dir --batch_size 64
+python3 ~/ChaserNER/bin/train.py --save_model_dir ~/test_model_save_dir
 #vim ~/test_model_save_dir/DESCRIPTION.txt
 ```
 
