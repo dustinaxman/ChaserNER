@@ -146,9 +146,9 @@ class NERModel(pl.LightningModule):
         mask = (offset_mapping[:, :, 0] == 0) & (offset_mapping[:, :, 1] != 0)
         labels_regrouped = [raw_labels[i][mask[i]] for i in range(mask.size(0))]
         hyps_regrouped = [all_predicted_classes[i][mask[i]] for i in range(mask.size(0))]
-        data_info = batch_to_info(batch, self.tokenizer, {v: k for k, v in self.label_to_id.items()}, outputs=outputs)
-        with open(self.working_dir/'output_test_eval.jsonl', 'a') as f:
-            f.write('\n'.join([json.dumps(info_sample) for info_sample in data_info]) + "\n")
+        # data_info = batch_to_info(batch, self.tokenizer, {v: k for k, v in self.label_to_id.items()}, outputs=outputs)
+        # with open(self.working_dir/'output_test_eval.jsonl', 'a') as f:
+        #     f.write('\n'.join([json.dumps(info_sample) for info_sample in data_info]) + "\n")
         return loss, labels_regrouped, hyps_regrouped
 
     def proc_loss_lbls_hyps_get_metrics(self, loss_lbl_hyps):
