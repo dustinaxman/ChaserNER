@@ -66,18 +66,15 @@ def strip_date_person_from_right(entities):
                 tail_flag = True
         else:
             tail_entities.append(entity)
-    print("what")
-    print(entities)
-    print(tail_entities)
     num_person_blocks = len([entity for entity in tail_entities if entity[1] == "person"])
     num_date_blocks = len([entity for entity in tail_entities if entity[1] == "date"])
     num_other_blocks = len([entity for entity in tail_entities if entity[1] == "O"])
     len_person_blocks = sum([len(entity[0].split()) for entity in tail_entities if entity[1] == "person"])
     len_date_blocks = sum([len(entity[0].split()) for entity in tail_entities if entity[1] == "date"])
     len_other_blocks = sum([len(entity[0].split()) for entity in tail_entities if entity[1] == "O"])
-    print(num_person_blocks, num_date_blocks, num_other_blocks, len_person_blocks, len_date_blocks, len_other_blocks)
-    print((num_date_blocks == 1 and num_person_blocks == 0 and len_other_blocks <= len_date_blocks))
-    print((num_date_blocks == 0 and num_person_blocks == 1 and len_other_blocks <= len_person_blocks))
+    # print(num_person_blocks, num_date_blocks, num_other_blocks, len_person_blocks, len_date_blocks, len_other_blocks)
+    # print((num_date_blocks == 1 and num_person_blocks == 0 and len_other_blocks <= len_date_blocks))
+    # print((num_date_blocks == 0 and num_person_blocks == 1 and len_other_blocks <= len_person_blocks))
     # if there is EXACTLY one person or one date block AND there is <= 1 OTHER block
     # if the OTHER block is not longer than the date or person block
     if num_other_blocks <= 1 and \

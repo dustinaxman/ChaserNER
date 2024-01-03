@@ -24,7 +24,7 @@ export AWS_PROFILE=chaser
 
 ```bash
 sg_name=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=ssh_and_scp" --query "SecurityGroups[*].{ID:GroupId}" --output text)
-instance_info=$(aws ec2 run-instances --image-id ami-0f837acd9af5d0944 --count 1 --instance-type g5.xlarge --key-name main --security-group-ids ${sg_name})
+instance_info=$(aws ec2 run-instances --image-id ami-0f837acd9af5d0944 --count 1 --instance-type g5.2xlarge --key-name main --security-group-ids ${sg_name})
 instance_id=$(echo ${instance_info} | jq -r .Instances[0].InstanceId)
 aws ec2 wait instance-running --instance-ids ${instance_id}
 public_ip=$(aws ec2 describe-instances --instance-ids ${instance_id} | jq -r .Reservations[0].Instances[0].PublicIpAddress)
@@ -62,7 +62,7 @@ docker_container_name=${expname}_container
 ### Pulling the model down locally and delete the instance
 ```bash
 rm -r ${model_dir}
-rsync -avz -e "ssh -i ~/Downloads/main_chaser.pem -o StrictHostKeyChecking=no" ec2-user@${public_ip}:~/test_model_save_dir/ ${model_dir}/
+rsync -avz -P -e "ssh -i ~/Downloads/main_chaser.pem -o StrictHostKeyChecking=no" ec2-user@${public_ip}:~/test_model_save_dir/ ${model_dir}/
 aws ec2 terminate-instances --instance-ids ${instance_id}
 aws ec2 wait instance-terminated --instance-ids ${instance_id}
 ```
