@@ -57,10 +57,10 @@ def run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl, device
     # print(outputs)
     labels_list = model_output_to_label_tensor(outputs, tokenized_data["offset_mapping"], ids2lbl)
 
-    perplexity_by_label, overall_perplexity = get_perplexity(outputs, ids2lbl)
-    print("perplexity:")
-    print(overall_perplexity)
-    print(perplexity_by_label)
+    # perplexity_by_label, overall_perplexity = get_perplexity(outputs, ids2lbl)
+    # print("perplexity:")
+    # print(overall_perplexity)
+    # print(perplexity_by_label)
 
     entity_extracted_samples = [{"input_text": input_text,
                                  "extracted_entities": process_entities_to_dict(extract_entities(input_text.split(), labels))}
@@ -86,10 +86,10 @@ def input_text_list_to_extracted_entities(input_text_list, config_path, device):
     start_time_2 = time.time()
 
     entity_extracted_samples, info_dict = run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl, device, info_log=True)
-    for tok in info_dict["model_input_and_output"][0]["log_probs"]:
-        print(tok.tolist())
+    # for tok in info_dict["model_input_and_output"][0]["log_probs"]:
+    #     print(tok.tolist())
     pprint.pprint(info_dict)
-    print(ids2lbl)
+    #print(ids2lbl)
     total_time = time.time() - start_time_2
     load_time = start_time_2 - start_time_1
     per_utt_time = total_time/float(len(input_text_list))

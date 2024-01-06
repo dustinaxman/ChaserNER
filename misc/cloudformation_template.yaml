@@ -16,9 +16,9 @@ Resources:
           yum install -y docker
           service docker start
           usermod -a -G docker ec2-user
-          aws ecr get-login-password --region ${AWS::Region} | docker login --username AWS --password-stdin 198449958201.dkr.ecr.us-east-1.amazonaws.com
-          docker pull 198449958201.dkr.ecr.us-east-1.amazonaws.com/chaser_ner:latest
-          docker run -d -p 8080:8080 -p 8081:8081 198449958201.dkr.ecr.us-east-1.amazonaws.com/chaser_ner:latest
+          aws ecr get-login-password --region ${AWS::Region} | docker login --username AWS --password-stdin 372052397911.dkr.ecr.us-east-1.amazonaws.com
+          docker pull 372052397911.dkr.ecr.us-east-1.amazonaws.com/chaser_ner:latest
+          docker run -d -p 8080:8080 -p 8081:8081 372052397911.dkr.ecr.us-east-1.amazonaws.com/chaser_ner:latest
       KeyName: main
 
   InstanceSecurityGroup:

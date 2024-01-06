@@ -2,7 +2,7 @@
 
 This guide details the steps for deploying the ChaserNER model using Docker and AWS services.
 Please keep in mind that you should ensure that your aws account has an ec2 keypair called "main" and pem file main_chaser.pem
-and has an ECR repo with this id: 198449958201.dkr.ecr.us-east-1.amazonaws.com. 
+and has an ECR repo with this id: 372052397911.dkr.ecr.us-east-1.amazonaws.com. 
 
 If you do not have this, 
 please change this to the repo you would like to use (run aws ecr describe-repositories to see your repos)
@@ -52,7 +52,7 @@ Set up the working directory and prepare the model directory:
 
 ```bash
 WORKING_DIR=~/Downloads
-expname=model_deployment_12_31_23_f2bc975a6045bd931af30b0f12a2084afe6e205a_v1.0.0
+expname=model_deployment_01_03_24_340c39fbd5a7a12482111cacd6fa98c19cbcf611_v1.0.0
 model_dir=${WORKING_DIR}/${expname}_model
 model_dir="${model_dir%/}"
 torchserve_image_name=${expname}_image
@@ -80,7 +80,7 @@ Add torchserve (creates the mar file in the dir) and optionall torchscript (jit)
 
 ### Push to s3
 ```bash
-aws s3 cp -r ${model_dir}/ s3://chaser-model-repo/${expname}/
+aws s3 cp --recursive ${model_dir}/ s3://chaser-models/${expname}/
 ```
 
 ### Building the Docker Image
@@ -97,7 +97,7 @@ docker build -t ${torchserve_image_name} -f ${model_dir}/Dockerfile ${model_dir}
 Authenticate and push the Docker image to ECR:
 
 ```bash
-ecr_uri="198449958201.dkr.ecr.us-east-1.amazonaws.com"
+ecr_uri="372052397911.dkr.ecr.us-east-1.amazonaws.com"
 docker login -u AWS -p $(aws ecr get-login-password --region us-east-1) ${ecr_uri}
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ecr_uri
 docker tag ${torchserve_image_name} ${ecr_uri}/chaser_ner:latest
