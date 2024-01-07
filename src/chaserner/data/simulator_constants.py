@@ -16,6 +16,9 @@ TRAIN_TEMPLATES = [
     "{task}",
     "{person}, {task} please, by {date}",
     "{person} will {task}, the due date is {date}",
+    "{task} due {date}",
+    "{person}, {task} due {date}",
+    "{person}, {task} due by {date}",
     "{person} can you {task} before {date}"]
 DEV_TEMPLATES = [
     "would it be straightforward to {task}?",
