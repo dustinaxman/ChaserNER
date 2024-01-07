@@ -36,72 +36,51 @@ ssh -i "~/Downloads/main_chaser.pem" -o "StrictHostKeyChecking=no" ec2-user@${pu
 ### Train model 
 Run on EC2 after SSHing in above
 ```bash
-sudo yum update -y
-sudo yum install python3-pip -y
-python3 -m pip install transformers pytorch-lightning datasets pytest seqeval lightning_lite torch torchvision
-python3 -m pip install 'urllib3<2.0'
 screen -D -R train
-export PYTHONPATH=~/ChaserNER/src/
-python3 ~/ChaserNER/bin/train.py --save_model_dir ~/test_model_save_dir
-#vim ~/test_model_save_dir/DESCRIPTION.txt
-```
-
-## Preparing and Pushing Container
-Run this on your local laptop
-Set up the working directory and prepare the model directory:
-
-```bash
-WORKING_DIR=~/Downloads
+WORKING_DIR=~/
 expname=model_deployment_01_03_24_340c39fbd5a7a12482111cacd6fa98c19cbcf611_v1.0.0
 model_dir=${WORKING_DIR}/${expname}_model
 model_dir="${model_dir%/}"
 torchserve_image_name=${expname}_image
 docker_container_name=${expname}_container
+sudo yum update -y
+sudo yum install python3-pip -y
+sudo yum install -y docker
+sudo service docker start
+sudo usermod -a -G docker ec2-user
+python3 -m pip install transformers pytorch-lightning datasets pytest seqeval lightning_lite torch torchvision
+python3 -m pip install 'urllib3<2.0'
+export PYTHONPATH=~/ChaserNER/src/
+python3 ~/ChaserNER/bin/train.py --save_model_dir ${model_dir}
+#vim ~/test_model_save_dir/DESCRIPTION.txt
 ```
 
-### Pulling the model down locally and delete the instance
-```bash
-rm -r ${model_dir}
-rsync -avz -P -e "ssh -i ~/Downloads/main_chaser.pem -o StrictHostKeyChecking=no" ec2-user@${public_ip}:~/test_model_save_dir/ ${model_dir}/
-aws ec2 terminate-instances --instance-ids ${instance_id}
-aws ec2 wait instance-terminated --instance-ids ${instance_id}
-```
-
-### Adding torchserve (and torchscript)
-Run on EC2 after SSHing in above
-Add torchserve (creates the mar file in the dir) and optionall torchscript (jit) to speed things up:
+### Adding torchserve (and torchscript) and Push to s3
+Add torchserve (creates the mar file in the dir) and optional torchscript (jit) to speed things up:
+backup folder to s3
 ```bash
 # commented out for deberta which doesn't yet support torchscript
 # when it supports, also change "insert_torchserve.sh" file to use "torchscript_model"
 # /opt/homebrew/bin/python3 /Users/deaxman/Projects/ChaserNER/bin/insert_torchscript.py --config_path ~/test_model_save_dir/config.json
 ~/Projects/ChaserNER/bin/insert_torchserve.sh ${model_dir}
-```
-
-
-### Push to s3
-```bash
 aws s3 cp --recursive ${model_dir}/ s3://chaser-models/${expname}/
 ```
 
-### Building the Docker Image
-
-Use the following command to build a Docker image for the TorchServe service. 
-To optionally test locally, see "LOCAL_TESTING_README.md"
-
-```bash
-docker build -t ${torchserve_image_name} -f ${model_dir}/Dockerfile ${model_dir}/
-```
-
-### Pushing the Container to Amazon ECR
-
-Authenticate and push the Docker image to ECR:
-
+### Building the Docker Image and push to Amazon ECR
+Build image, authenticate and push the Docker image to ECR:
 ```bash
 ecr_uri="372052397911.dkr.ecr.us-east-1.amazonaws.com"
+docker build -t ${torchserve_image_name} -f ${model_dir}/Dockerfile ${model_dir}/
 docker login -u AWS -p $(aws ecr get-login-password --region us-east-1) ${ecr_uri}
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ecr_uri
 docker tag ${torchserve_image_name} ${ecr_uri}/chaser_ner:latest
 docker push ${ecr_uri}/chaser_ner:latest
+```
+
+### Delete the instance
+```bash
+aws ec2 terminate-instances --instance-ids ${instance_id}
+aws ec2 wait instance-terminated --instance-ids ${instance_id}
 ```
 
 ## Deploying the Stack on AWS
