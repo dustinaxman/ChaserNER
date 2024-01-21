@@ -3,6 +3,7 @@
 This guide details the steps for deploying the ChaserNER model using Docker and AWS services.
 Please keep in mind that you should ensure that your aws account has an ec2 keypair called "main" and pem file main_chaser.pem
 and has an ECR repo with this id: 372052397911.dkr.ecr.us-east-1.amazonaws.com. 
+Create ECR_and_S3 iam role for ec2, which gives ecr and s3 full access.
 
 If you do not have this, 
 please change this to the repo you would like to use (run aws ecr describe-repositories to see your repos)
@@ -38,7 +39,7 @@ Run on EC2 after SSHing in above
 ```bash
 screen -D -R train
 WORKING_DIR=~/
-expname=model_deployment_01_03_24_340c39fbd5a7a12482111cacd6fa98c19cbcf611_v1.0.0
+expname=model_deployment_01_08_24_b7815c3b5ef0832acc5e51134012087abc8a1dea_v1.0.1
 model_dir=${WORKING_DIR}/${expname}_model
 model_dir="${model_dir%/}"
 torchserve_image_name=${expname}_image
@@ -50,6 +51,7 @@ sudo service docker start
 sudo usermod -a -G docker ec2-user
 python3 -m pip install transformers pytorch-lightning datasets pytest seqeval lightning_lite torch torchvision
 python3 -m pip install 'urllib3<2.0'
+python3 -m pip install torchserve torch-model-archiver
 export PYTHONPATH=~/ChaserNER/src/
 python3 ~/ChaserNER/bin/train.py --save_model_dir ${model_dir}
 #vim ~/test_model_save_dir/DESCRIPTION.txt
@@ -63,7 +65,7 @@ Build image, authenticate and push the Docker image to ECR:
 # commented out for deberta which doesn't yet support torchscript
 # when it supports, also change "insert_torchserve.sh" file to use "torchscript_model"
 # /opt/homebrew/bin/python3 /Users/deaxman/Projects/ChaserNER/bin/insert_torchscript.py --config_path ~/test_model_save_dir/config.json
-~/Projects/ChaserNER/bin/insert_torchserve.sh ${model_dir}
+~/ChaserNER/bin/insert_torchserve.sh ${model_dir}
 aws s3 cp --recursive ${model_dir}/ s3://chaser-models/${expname}/
 ecr_uri="372052397911.dkr.ecr.us-east-1.amazonaws.com"
 docker build -t ${torchserve_image_name} -f ${model_dir}/Dockerfile ${model_dir}/
@@ -72,6 +74,18 @@ aws ecr get-login-password --region us-east-1 | docker login --username AWS --pa
 docker tag ${torchserve_image_name} ${ecr_uri}/chaser_ner:latest
 docker push ${ecr_uri}/chaser_ner:latest
 ```
+
+
+WORKING_DIR=~/Downloads/
+expname=model_deployment_01_08_24_b7815c3b5ef0832acc5e51134012087abc8a1dea_v1.0.1
+model_dir=${WORKING_DIR}/${expname}_model
+model_dir="${model_dir%/}"
+torchserve_image_name=${expname}_image
+docker_container_name=${expname}_container
+aws s3 cp --recursive s3://chaser-models/model_deployment_01_08_24_b7815c3b5ef0832acc5e51134012087abc8a1dea_v1.0.1/ ~/Downloads/model_deployment_01_08_24_b7815c3b5ef0832acc5e51134012087abc8a1dea_v1.0.1_model/
+
+
+
 
 ### Delete the instance
 ```bash
@@ -102,7 +116,7 @@ API_KEY_VALUE=$(aws apigateway get-api-key --api-key $API_KEY_ID --include-value
 echo "API KEY: ${API_KEY_VALUE}"
 echo "API ENDPOINT: ${API_ENDPOINT}"
 
-curl -X POST ${API_ENDPOINT} -H "Content-Type: application/json" -H "x-api-key: ${API_KEY}" -d '{"text": "dustin please finish the report on profit by 10/21"}'
+curl -X POST ${API_ENDPOINT} -H "Content-Type: application/json" -H "x-api-key: ${API_KEY}" -d '{"text": "Design new logo due Tuesday"}'
 ```
 
 ## Spinning Down the Stack

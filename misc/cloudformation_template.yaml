@@ -48,6 +48,30 @@ Resources:
       Roles:
         - Ref: EC2Role
 
+  ApiGatewayLoggingRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ApiGatewayLoggingPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                Resource: '*'
+
   EC2Role:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -84,7 +108,15 @@ Resources:
       RestApiId: !Ref Api
       DeploymentId: !Ref Deployment
       Description: 'Production stage for the API'
-
+      MethodSettings:
+        - DataTraceEnabled: true
+          HttpMethod: "*"
+          LoggingLevel: INFO
+          ResourcePath: "/*"
+      AccessLogSetting:
+        DestinationArn: !GetAtt CloudWatchLogGroup.Arn
+        Format: "{\"requestId\":\"$context.requestId\",\"apiId\":\"$context.apiId\",\"resourcePath\":\"$context.resourcePath\",\"httpMethod\":\"$context.httpMethod\",\"requestTime\":\"$context.requestTime\",\"requestBody\":\"$request.body\",\"responseBody\":\"$response.body\",\"status\":\"$context.status\",\"latency\":\"$context.responseLatency\"}"
+        RoleArn: !GetAtt ApiGatewayLoggingRole.Arn
   Api:
     Type: "AWS::ApiGateway::RestApi"
     Properties:

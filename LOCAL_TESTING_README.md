@@ -7,7 +7,7 @@ docker run -p 8080:8080 -p 8081:8081 --name ${docker_container_name} ${torchserv
 
 curl -X POST http://localhost:8080/predictions/chaser_ner_model \
      -H "Content-Type: application/json" \
-     -d '{"text": "dustin please finish the report on profit by 10/21"}'
+     -d '{"text": "Design new logo due Tuesday"}'
 ```
 
 ### Monitoring the Docker Container
