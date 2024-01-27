@@ -55,6 +55,7 @@ python3 -m pip install torchserve torch-model-archiver
 export PYTHONPATH=~/ChaserNER/src/
 python3 ~/ChaserNER/bin/train.py --save_model_dir ${model_dir}
 #vim ~/test_model_save_dir/DESCRIPTION.txt
+aws s3 cp --recursive ${model_dir}/ s3://chaser-models/${expname}/
 ```
 
 ### Process trained model to hostable ECR image
@@ -62,11 +63,18 @@ Add torchserve (creates the mar file in the dir) and optional torchscript (jit) 
 backup folder to s3
 Build image, authenticate and push the Docker image to ECR:
 ```bash
+expname=model_deployment_01_08_24_b7815c3b5ef0832acc5e51134012087abc8a1dea_v1.0.1
+WORKING_DIR=~/Downloads/
+model_dir=${WORKING_DIR}/${expname}_model
+model_dir="${model_dir%/}"
+torchserve_image_name=${expname}_image
+docker_container_name=${expname}_container
+aws s3 cp --recursive s3://chaser-models/${expname}/ ${model_dir}/
 # commented out for deberta which doesn't yet support torchscript
 # when it supports, also change "insert_torchserve.sh" file to use "torchscript_model"
-# /opt/homebrew/bin/python3 /Users/deaxman/Projects/ChaserNER/bin/insert_torchscript.py --config_path ~/test_model_save_dir/config.json
+# /opt/homebrew/bin/python3 ~/Projects/ChaserNER/bin/insert_torchscript.py --config_path  ${model_dir}/config.json
 ~/ChaserNER/bin/insert_torchserve.sh ${model_dir}
-aws s3 cp --recursive ${model_dir}/ s3://chaser-models/${expname}/
+
 ecr_uri="372052397911.dkr.ecr.us-east-1.amazonaws.com"
 docker build -t ${torchserve_image_name} -f ${model_dir}/Dockerfile ${model_dir}/
 docker login -u AWS -p $(aws ecr get-login-password --region us-east-1) ${ecr_uri}
@@ -75,14 +83,6 @@ docker tag ${torchserve_image_name} ${ecr_uri}/chaser_ner:latest
 docker push ${ecr_uri}/chaser_ner:latest
 ```
 
-
-WORKING_DIR=~/Downloads/
-expname=model_deployment_01_08_24_b7815c3b5ef0832acc5e51134012087abc8a1dea_v1.0.1
-model_dir=${WORKING_DIR}/${expname}_model
-model_dir="${model_dir%/}"
-torchserve_image_name=${expname}_image
-docker_container_name=${expname}_container
-aws s3 cp --recursive s3://chaser-models/model_deployment_01_08_24_b7815c3b5ef0832acc5e51134012087abc8a1dea_v1.0.1/ ~/Downloads/model_deployment_01_08_24_b7815c3b5ef0832acc5e51134012087abc8a1dea_v1.0.1_model/
 
 
 

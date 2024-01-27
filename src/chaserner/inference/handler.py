@@ -60,12 +60,17 @@ _service = NERModelHandler()
 
 def handle(data_batch, context):
     if not _service.initialized:
+        print("Initializing service")
         _service.initialize(context)
     if data_batch is None:
         return None
-
+    starttime = time.time()
     input_text_list = _service.preprocess(data_batch)
+    preproc_time = time.time() - starttime
+    print(f"PREPROCESS TIME: {preproc_time}")
     result = _service.inference(input_text_list)
+    preproc_time = time.time() - starttime
+    print(f"POST INFERENCE TIME: {preproc_time}")
     #result = _service.postprocess(result)
     return result
 

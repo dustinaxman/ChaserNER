@@ -298,6 +298,13 @@ Resources:
       SubnetId: !Ref SubnetF
       RouteTableId: !Ref RouteTable
 
+CloudWatchLogGroup:
+  Type: "AWS::Logs::LogGroup"
+  DeletionPolicy: Retain
+  Properties:
+    LogGroupName: "/aws/apigateway/TorchServeAPI"
+    RetentionInDays: 30
+
 Outputs:
   ApiEndpoint:
     Description: "URL for the deployed TorchServe API endpoint."

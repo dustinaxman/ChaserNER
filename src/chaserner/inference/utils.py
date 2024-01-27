@@ -1,4 +1,6 @@
 import torch
+# import torch.quantization
+# from torch.quantization import quantize_dynamic
 from transformers import DebertaTokenizerFast
 import json
 from chaserner.model import NERModel
@@ -6,6 +8,8 @@ from chaserner.utils import model_output_to_label_tensor, extract_entities, batc
 from pathlib import Path
 import time
 import pprint
+
+#torch.backends.quantized.engine = 'qnnpack'
 
 #import os
 #os.environ["OMP_NUM_THREADS"] = "1"
@@ -31,10 +35,12 @@ def load_model(config_path, device):
                                               label_to_id=config["lbl2ids"], map_location=device, strict=False)
     model.eval()
     model = model.to(device)
+    #quantized_model = quantize_dynamic(model, {torch.nn.Linear}, dtype=torch.qint8)
     return model, tokenizer, max_length, ids2lbl
 
 
 def run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl, device, info_log=None):
+    start_time = time.time()
     input_text_list = [txt.strip() for txt in input_text_list]
     token_lengths = [len(tokenizer.encode(txt, add_special_tokens=True)) for txt in input_text_list]
     # Find the maximum token length from the tokenized texts
@@ -50,10 +56,11 @@ def run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl, device
         return_tensors='pt',
         return_offsets_mapping=True
     ).to(device)
-    start_time_model_only = time.time()
+    total_time = time.time() - start_time
+    print(f"TOKENIZER DONE: {total_time}")
     outputs = model(tokenized_data["input_ids"], tokenized_data["attention_mask"])
-    total_time = time.time() - start_time_model_only
-    print(f"MODEL ONLY: {total_time}")
+    total_time = time.time() - start_time
+    print(f"MODEL DONE: {total_time}")
     # print(outputs)
     labels_list = model_output_to_label_tensor(outputs, tokenized_data["offset_mapping"], ids2lbl)
 
@@ -65,6 +72,8 @@ def run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl, device
     entity_extracted_samples = [{"input_text": input_text,
                                  "extracted_entities": process_entities_to_dict(extract_entities(input_text.split(), labels))}
                                 for input_text, labels in zip(input_text_list, labels_list)]
+    total_time = time.time() - start_time
+    print(f"ALL: {total_time}")
     if info_log:
         return entity_extracted_samples, {"model_input_and_output": batch_to_info(tokenized_data,
                                                                                   tokenizer,
