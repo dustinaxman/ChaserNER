@@ -3,7 +3,7 @@ Resources:
     Type: AWS::EC2::Instance
     DependsOn: [InternetGateway, GatewayAttachment, RouteTable, Route, InstanceSecurityGroup, SubnetA]
     Properties:
-      InstanceType: c7g.large
+      InstanceType: t4g.medium
       ImageId: ami-0b9ce70cf1bc24fc3
       IamInstanceProfile: !Ref EC2InstanceProfile
       SecurityGroupIds:
