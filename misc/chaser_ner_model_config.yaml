@@ -3,7 +3,7 @@
 minWorkers: 1 # default: #CPU or #GPU
 maxWorkers: 1 # default: #CPU or #GPU
 batchSize: 32 # default: 1
-maxBatchDelay: 500 # default: 100 msec
-responseTimeout: 120 # default: 120 sec
+maxBatchDelay: 50 # default: 100 msec
+responseTimeout: 200 # default: 120 sec
 deviceType: cpu # cpu, gpu, neuron
 

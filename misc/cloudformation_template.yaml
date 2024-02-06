@@ -116,13 +116,17 @@ Resources:
       AccessLogSetting:
         DestinationArn: !GetAtt CloudWatchLogGroup.Arn
         Format: "{\"requestId\":\"$context.requestId\",\"apiId\":\"$context.apiId\",\"resourcePath\":\"$context.resourcePath\",\"httpMethod\":\"$context.httpMethod\",\"requestTime\":\"$context.requestTime\",\"requestBody\":\"$request.body\",\"responseBody\":\"$response.body\",\"status\":\"$context.status\",\"latency\":\"$context.responseLatency\"}"
-        RoleArn: !GetAtt ApiGatewayLoggingRole.Arn
   Api:
     Type: "AWS::ApiGateway::RestApi"
     Properties:
       Name: "TorchServeAPI"
       Description: "API for TorchServe"
       FailOnWarnings: "true"
+
+  ApiGatewayAccount:
+    Type: 'AWS::ApiGateway::Account'
+    Properties:
+      CloudWatchRoleArn: !GetAtt ApiGatewayLoggingRole.Arn
 
   RootMethod:
     Type: 'AWS::ApiGateway::Method'
@@ -298,12 +302,12 @@ Resources:
       SubnetId: !Ref SubnetF
       RouteTableId: !Ref RouteTable
 
-CloudWatchLogGroup:
-  Type: "AWS::Logs::LogGroup"
-  DeletionPolicy: Retain
-  Properties:
-    LogGroupName: "/aws/apigateway/TorchServeAPI"
-    RetentionInDays: 30
+  CloudWatchLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: "/aws/apigateway/TorchServeAPI"
+      RetentionInDays: 30
 
 Outputs:
   ApiEndpoint:

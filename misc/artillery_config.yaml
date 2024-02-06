@@ -1,12 +1,12 @@
 config:
-  target: 'https://o6338kpuvh.execute-api.us-east-1.amazonaws.com/prod'
+  target: 'https://mcwyczm9qa.execute-api.us-east-1.amazonaws.com/prod'
   phases:
     - duration: 60
       arrivalRate: 10
   defaults:
     headers:
       Content-Type: "application/json"
-      x-api-key: "LrhE4RFU4E9to4bh7wxtM8UJd5PWf03w6G2JgfqZ"
+      x-api-key: "E0xB36XpTdJCz7zMk5rz9ccPMW9mf66abdLxOq2e"
   processor: "./payloadGenerator.js"
 
 scenarios:
