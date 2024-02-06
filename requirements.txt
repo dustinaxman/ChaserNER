@@ -1,0 +1,11 @@
+datasets==2.14.4
+pytest==7.4.0
+pytorch-lightning==2.0.7
+seqeval==1.2.2
+torch==2.0.1
+torch-model-archiver==0.6.0
+torchmetrics==1.1.0
+torchserve==0.6.0
+torchvision==0.15.2
+transformers==4.32.0
+urllib3==2.0.4
