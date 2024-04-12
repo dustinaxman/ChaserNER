@@ -36,7 +36,12 @@ class NERModelHandler():
         return [data["body"]["text"] for data in data_batch]
 
     def inference(self, input_text_list):
-        text_input_list_for_inference = [text_input for text_input in input_text_list if text_input not in self.lfucache.cache]
+        # The list input can have items that are either lists of strings or strings, for backward compatibility
+        assert(all([isinstance(call_textfield_input, str) or isinstance(call_textfield_input, list) for call_textfield_input in input_text_list]))
+        all_list_form_textfield_input = [[call_textfield_input] if isinstance(call_textfield_input, str) else call_textfield_input for call_textfield_input in input_text_list]
+        input_text_list_processed = [text_elem for list_of_text_elem in all_list_form_textfield_input for text_elem in list_of_text_elem]
+        text_input_list_for_inference = [text_input for text_input in input_text_list_processed if
+                                         text_input not in self.lfucache.cache]
         if len(text_input_list_for_inference) > 0:
             print(self.device)
             print("LEN INFERENCE TEXT", len(text_input_list_for_inference))
@@ -51,7 +56,7 @@ class NERModelHandler():
                     self.lfucache.put(text_input, extracted_entity_dict)
                 else:
                     temp_cache[text_input] = extracted_entity_dict
-        return [self.lfucache.get(text_input) if text_input in self.lfucache.cache else temp_cache[text_input] for text_input in input_text_list]
+        return [[self.lfucache.get(text_input) if text_input in self.lfucache.cache else temp_cache[text_input] for text_input in list_of_text_elem] for list_of_text_elem in all_list_form_textfield_input]
 
 
 

@@ -93,9 +93,10 @@ aws ec2 wait instance-terminated --instance-ids ${instance_id}
 
 ## Deploying the Stack on AWS
 
-Deploy the cloud formation stack:
+Deploy the cloud formation stack (after deleting the log group if it exists so it can be created again):
 
 ```bash
+aws logs delete-log-group --log-group-name "/aws/apigateway/TorchServeAPI"
 aws cloudformation create-stack --stack-name chaser-ner-host --template-body file:///Users/deaxman/Projects/ChaserNER/misc/cloudformation_template.yaml --capabilities CAPABILITY_IAM
 ```
 
@@ -116,6 +117,8 @@ echo "API ENDPOINT: ${API_ENDPOINT}"
 
 curl -X POST ${API_ENDPOINT} -H "Content-Type: application/json" -H "x-api-key: ${API_KEY}" -d '{"text": "Design new logo due Tuesday"}'
 ```
+
+
 
 ## Spinning Down the Stack
 
