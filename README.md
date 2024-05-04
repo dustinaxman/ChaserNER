@@ -115,10 +115,14 @@ API_KEY_VALUE=$(aws apigateway get-api-key --api-key $API_KEY_ID --include-value
 echo "API KEY: ${API_KEY_VALUE}"
 echo "API ENDPOINT: ${API_ENDPOINT}"
 
-curl -X POST ${API_ENDPOINT} -H "Content-Type: application/json" -H "x-api-key: ${API_KEY}" -d '{"text": "Design new logo due Tuesday"}'
+curl -X POST ${API_ENDPOINT} -H "Content-Type: application/json" -H "x-api-key: ${API_KEY_VALUE}" -d '{"text": "Design new logo due Tuesday"}'
 ```
 
+```bash
+curl -X POST ${API_ENDPOINT} -H "Content-Type: application/json" -H "x-api-key: ${API_KEY_VALUE}" -d '{"text": ["Design new logo due Tuesday", "listen derek, get the dog fed by monday"]}' &
 
+curl -X POST ${API_ENDPOINT} -H "Content-Type: application/json" -H "x-api-key: ${API_KEY_VALUE}" -d '{"text": ["Design new logo due wednesday", "listen derek, get the dog fed by monday"]}' &
+```
 
 ## Spinning Down the Stack
 

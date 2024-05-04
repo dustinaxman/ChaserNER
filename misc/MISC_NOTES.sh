@@ -1,3 +1,26 @@
+
+export PYTHONPATH=~/Projects/ChaserNER/src/:
+rm ~/Downloads/test_input.txt;for i in {1..2}; do echo "davis will finish the report by friday" >> ~/Downloads/test_input.txt; done
+model_dir=~/Downloads/model_deployment_01_03_24_340c39fbd5a7a12482111cacd6fa98c19cbcf611_v1.0.0_model/
+/opt/homebrew/bin/python3 /Users/deaxman/Projects/ChaserNER/bin/get_entities.py --input ~/Downloads/test_input.txt --config ${model_dir}/config.json --output ~/Downloads/output.json
+head ~/Downloads/output.json
+
+
+
+
+#### HOW TO GET AWS LATENCY LOGS
+curl -X POST ${API_ENDPOINT} -H "Content-Type: application/json" -H "x-api-key: ${API_KEY}" -d '{"text": "cardi will work on normalizing the columns"}'
+
+
+queryId=$(aws logs start-query     --log-group-name "LogChaserNER"     --start-time 00000000000     --end-time 27060216833     --query-string 'fields @timestamp, @message | parse @message "{*\"latency\":\"*\"}" as before, latency, after | sort @timestamp desc | limit 1000'     --output json | jq -r '.queryId')
+
+
+aws logs get-query-results --query-id "${queryId}" | jq -r '.results[] | .[] | select(.field == "@message") | .value | fromjson.latency'
+
+
+
+
+
 aws ecr get-login-password --region region | docker login --username AWS --password-stdin aws_account_id.dkr.ecr.region.amazonaws.com
 docker tag e9ae3c220b23 aws_account_id.dkr.ecr.us-west-2.amazonaws.com/my-repository:tag
 docker push aws_account_id.dkr.ecr.us-west-2.amazonaws.com/my-repository:tag
@@ -598,4 +621,64 @@ metrics = {
 }
 
 
+
+export PYTHONPATH=~/Projects/ChaserNER/src/:
+model_dir=~/Downloads/remote_trained_model
+model_dir="${model_dir%/}"
+torchserve_image_name=deberta_model_new_logic_for_task
+docker_container_name=deberta_model_new_logic_for_task
+
+/opt/homebrew/bin/python3 /Users/deaxman/Projects/ChaserNER/bin/insert_torchscript.py --config_path ${model_dir}/config.json
+
+
+/Users/deaxman/Projects/ChaserNER/bin/insert_torchserve.sh ${model_dir}
+
+
+
+docker build -t ${torchserve_image_name} -f ${model_dir}/Dockerfile ${model_dir}/
+docker run -p 8080:8080 -p 8081:8081 --name ${docker_container_name} ${torchserve_image_name}
+
+
+
+curl -X POST http://localhost:8080/predictions/chaser_ner_model \
+     -H "Content-Type: application/json" \
+     -d '{"text": "Your sample text here"}'
+
+
+ecr_uri="198449958201.dkr.ecr.us-east-1.amazonaws.com"
+
+docker login -u AWS -p $(aws ecr get-login-password --region us-east-1) ${ecr_uri}
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ecr_uri
+
+
+docker tag ${torchserve_image_name} ${ecr_uri}/chaser_ner:latest
+docker push ${ecr_uri}/chaser_ner:latest
+
+
+aws cloudformation create-stack --stack-name chaser-ner-host --template-body file:///Users/deaxman/Projects/ChaserNER/misc/cloudformation_template.yaml --capabilities CAPABILITY_IAM
+
+
+API_ENDPOINT=$(aws cloudformation describe-stacks --stack-name chaser-ner-host --query 'Stacks[0].Outputs[?OutputKey==`ApiEndpoint`].OutputValue' --output text | sed 's/\/$//')
+echo $API_ENDPOINT
+
+API_KEY_ID=$(aws apigateway get-api-keys --include-values --query 'items[?name==`MyRestrictedAPIKey`].id' --output text)
+echo ${API_KEY_ID}
+
+API_KEY_VALUE=$(aws apigateway get-api-key --api-key $API_KEY_ID --include-value --query 'value' --output text)
+echo $API_KEY_VALUE
+
+
+
+echo "API KEY: ${API_KEY_VALUE}"
+echo "API ENDPOINT: ${API_ENDPOINT}"
+
+
+curl -X POST ${API_ENDPOINT} -H "Content-Type: application/json" -H "x-api-key: ${API_KEY}" -d '{"text": "dustin please finish the report on profit by 10/21"}'
+
+curl -X POST ${API_ENDPOINT} -H "Content-Type: application/json" -H "x-api-key: ${API_KEY}" -d '{"text": "eat the apple dustin, also can you change the tire"}'
+
+
+
+
+aws cloudformation delete-stack --stack-name chaser-ner-host
 
