@@ -2,8 +2,8 @@
 
 model_dir=$1
 model_dir="${model_dir%/}"
-#model_file_path=${model_dir}/$(cat ${model_dir}/config.json | jq -r '.["torchscript_model"]')
-model_file_path=${model_dir}/$(cat ${model_dir}/config.json | jq -r '.["best_checkpoint"]')
+model_file_path=${model_dir}/$(cat ${model_dir}/config.json | jq -r '.["torchscript_model"]')
+#model_file_path=${model_dir}/$(cat ${model_dir}/config.json | jq -r '.["best_checkpoint"]')
 
 
 #zip -r ${model_dir}/chaser_extras.zip /Users/deaxman/Projects/ChaserNER/src/chaserner

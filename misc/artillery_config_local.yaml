@@ -1,12 +1,11 @@
 config:
-  target: 'https://a9l67pwjh6.execute-api.us-east-1.amazonaws.com/prod'
+  target: 'http://localhost:8080/predictions/chaser_ner_model/'
   phases:
     - duration: 600
       arrivalRate: 5
   defaults:
     headers:
       Content-Type: "application/json"
-      x-api-key: "rxEsARo3LU2CKBslMyFHF3X0OfBzDPvd2QzbW7Zi"
   processor: "./payloadGenerator.js"
 
 scenarios:
