@@ -28,7 +28,7 @@ def load_model(config_path, device):
     if "torchscript_model" in config:
         model_path = config_path.parent / config["torchscript_model"]
         print("LOADING TORCHSCRIPT FILE")
-        model = torch.jit.load(str(model_path), map_location=device, strict=False)
+        model = torch.jit.load(str(model_path), map_location=device)#, strict=False)
     else:
         print("LOADING MODEL CHECKPOINT")
         model = NERModel.load_from_checkpoint(checkpoint_path=model_path, hf_model_name=tokenizer_name,

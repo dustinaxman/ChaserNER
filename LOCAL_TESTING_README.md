@@ -3,6 +3,7 @@
 To test the Docker container offline, run the container and test it with a sample request:
 
 ```bash
+torchserve_container_name=${expname}_container
 docker run -p 8080:8080 -p 8081:8081 --name ${docker_container_name} ${torchserve_image_name}
 
 curl -X POST http://localhost:8080/predictions/chaser_ner_model \
