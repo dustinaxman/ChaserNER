@@ -7,7 +7,7 @@ model_file_path=${model_dir}/$(cat ${model_dir}/config.json | jq -r '.["torchscr
 
 
 #zip -r ${model_dir}/chaser_extras.zip /Users/deaxman/Projects/ChaserNER/src/chaserner
-export PATH="/opt/homebrew/bin:$PATH"
+#export PATH="/opt/homebrew/bin:$PATH"
 
 TEMP_DIR=$(mktemp -d)
 ln -s "/Users/deaxman/Projects/ChaserNER/src/chaserner" $TEMP_DIR
