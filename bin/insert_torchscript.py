@@ -38,10 +38,14 @@ if __name__ == "__main__":
         return_offsets_mapping=True
     ).to("cpu")
     example_inputs = (tokenized_data["input_ids"], tokenized_data["attention_mask"])
-    traced_model = model.to_torchscript(method='trace', example_inputs=example_inputs, strict=False)
-    #traced_model = torch.jit.trace(model, example_inputs)
-    torchscript_model_path = config_path.parent/'model.pt'
-    traced_model.save(torchscript_model_path)
+    torchscript_model_path = config_path.parent / 'model.pt'
+    if torchscript_model_path.exists():
+        print(f"File {torchscript_model_path} already exists. It will be overwritten.")
+
+    with torch.no_grad():
+        traced_model = model.to_torchscript(method='trace', example_inputs=example_inputs, strict=False)
+        #traced_model = torch.jit.trace(model, example_inputs)
+        traced_model.save(torchscript_model_path)
     config["torchscript_model"] = str(torchscript_model_path.name)
     with open(config_path, "w") as f:
         json.dump(config, f)
