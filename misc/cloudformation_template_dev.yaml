@@ -1,0 +1,325 @@
+Resources:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    DependsOn: [InternetGateway, GatewayAttachment, RouteTable, Route, InstanceSecurityGroup, SubnetA]
+    Properties:
+      InstanceType: t4g.medium
+      ImageId: ami-0b9ce70cf1bc24fc3
+      BlockDeviceMappings:
+        - DeviceName: "/dev/xvda"
+          Ebs:
+            VolumeSize: 20
+            VolumeType: "gp3"
+            DeleteOnTermination: true
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SecurityGroupIds:
+        - !Ref InstanceSecurityGroup
+      SubnetId: !Ref SubnetA
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y docker
+          service docker start
+          usermod -a -G docker ec2-user
+          aws ecr get-login-password --region ${AWS::Region} | docker login --username AWS --password-stdin 372052397911.dkr.ecr.us-east-1.amazonaws.com
+          docker pull 372052397911.dkr.ecr.us-east-1.amazonaws.com/chaser_ner:dev
+          docker run -d -p 8080:8080 -p 8081:8081 372052397911.dkr.ecr.us-east-1.amazonaws.com/chaser_ner:dev
+      KeyName: main
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref MyVPC
+      GroupDescription: Enable ports for TorchServe
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '8080'
+        ToPort: '8081'
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: '443'
+        ToPort: '443'
+        CidrIp: 0.0.0.0/0
+
+  EC2InstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: "/"
+      Roles:
+        - Ref: EC2Role
+
+  ApiGatewayLoggingRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ApiGatewayLoggingPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                Resource: '*'
+
+  EC2Role:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Path: "/"
+
+  EC2Policy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: EC2ECRPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchGetImage
+              - ecr:BatchCheckLayerAvailability
+              - ecr:GetAuthorizationToken
+            Resource: '*'
+      Roles:
+        - Ref: EC2Role
+
+  ApiStage:
+    Type: 'AWS::ApiGateway::Stage'
+    Properties:
+      StageName: 'dev'
+      RestApiId: !Ref Api
+      DeploymentId: !Ref Deployment
+      Description: 'Dev stage for the API'
+      MethodSettings:
+        - DataTraceEnabled: true
+          HttpMethod: "*"
+          LoggingLevel: INFO
+          ResourcePath: "/*"
+      AccessLogSetting:
+        DestinationArn: !GetAtt CloudWatchLogGroup.Arn
+        Format: "{\"requestId\":\"$context.requestId\",\"apiId\":\"$context.apiId\",\"resourcePath\":\"$context.resourcePath\",\"httpMethod\":\"$context.httpMethod\",\"requestTime\":\"$context.requestTime\",\"requestBody\":\"$request.body\",\"responseBody\":\"$response.body\",\"status\":\"$context.status\",\"latency\":\"$context.responseLatency\"}"
+  Api:
+    Type: "AWS::ApiGateway::RestApi"
+    Properties:
+      Name: "TorchServeAPI"
+      Description: "API for TorchServe"
+      FailOnWarnings: "true"
+
+  ApiGatewayAccount:
+    Type: 'AWS::ApiGateway::Account'
+    Properties:
+      CloudWatchRoleArn: !GetAtt ApiGatewayLoggingRole.Arn
+
+  RootMethod:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      ResourceId:
+        Fn::GetAtt:
+        - "Api"
+        - "RootResourceId"
+      RestApiId:
+        Ref: "Api"
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: HTTP_PROXY
+        Uri:
+          Fn::Sub:
+          - "http://${EC2Instance.PublicIp}:8080/predictions/chaser_ner_model"
+          - EC2Instance:
+              Ref: EC2Instance
+
+  Deployment:
+    DependsOn: RootMethod
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId:
+        Ref: "Api"
+
+  ApiKey:
+    Type: "AWS::ApiGateway::ApiKey"
+    Properties:
+      Description: "API Key for restricted access"
+      Enabled: "true"
+      Name: "MyRestrictedAPIKey"
+      StageKeys:
+        - RestApiId: !Ref Api
+          StageName: !Ref ApiStage
+
+  UsagePlan:
+    Type: "AWS::ApiGateway::UsagePlan"
+    DependsOn: Deployment
+    Properties:
+      ApiStages:
+      - ApiId: !Ref Api
+        Stage: !Ref ApiStage
+      Description: "Usage plan for our API"
+      Quota:
+        Limit: 5000
+        Period: "MONTH"
+      Throttle:
+        BurstLimit: 1000
+        RateLimit: 500
+
+  UsagePlanKey:
+    Type: "AWS::ApiGateway::UsagePlanKey"
+    Properties:
+      KeyId: !Ref ApiKey
+      KeyType: "API_KEY"
+      UsagePlanId: !Ref UsagePlan
+
+  MyVPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: "172.31.0.0/16"
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+
+  # Subnets
+  SubnetA:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "172.31.0.0/20"
+      AvailabilityZone: "us-east-1b"
+      MapPublicIpOnLaunch: true
+  SubnetB:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "172.31.80.0/20"
+      AvailabilityZone: "us-east-1c"
+      MapPublicIpOnLaunch: true
+  SubnetC:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "172.31.48.0/20"
+      AvailabilityZone: "us-east-1e"
+      MapPublicIpOnLaunch: true
+  SubnetD:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "172.31.64.0/20"
+      AvailabilityZone: "us-east-1f"
+      MapPublicIpOnLaunch: true
+  SubnetE:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "172.31.16.0/20"
+      AvailabilityZone: "us-east-1d"
+      MapPublicIpOnLaunch: true
+  SubnetF:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "172.31.32.0/20"
+      AvailabilityZone: "us-east-1a"
+      MapPublicIpOnLaunch: true
+
+  InternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+
+  GatewayAttachment:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      VpcId: !Ref MyVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  RouteTable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref MyVPC
+
+  Route:
+    Type: "AWS::EC2::Route"
+    DependsOn: [InternetGateway, RouteTable]
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteTableAssociationA:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    DependsOn: [SubnetA, RouteTable]
+    Properties:
+      SubnetId: !Ref SubnetA
+      RouteTableId: !Ref RouteTable
+
+  SubnetRouteTableAssociationB:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    DependsOn: [SubnetB, RouteTable]
+    Properties:
+      SubnetId: !Ref SubnetB
+      RouteTableId: !Ref RouteTable
+
+  SubnetRouteTableAssociationC:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    DependsOn: [SubnetC, RouteTable]
+    Properties:
+      SubnetId: !Ref SubnetC
+      RouteTableId: !Ref RouteTable
+
+  SubnetRouteTableAssociationD:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    DependsOn: [SubnetD, RouteTable]
+    Properties:
+      SubnetId: !Ref SubnetD
+      RouteTableId: !Ref RouteTable
+
+  SubnetRouteTableAssociationE:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    DependsOn: [SubnetE, RouteTable]
+    Properties:
+      SubnetId: !Ref SubnetE
+      RouteTableId: !Ref RouteTable
+
+  SubnetRouteTableAssociationF:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    DependsOn: [SubnetF, RouteTable]
+    Properties:
+      SubnetId: !Ref SubnetF
+      RouteTableId: !Ref RouteTable
+
+  CloudWatchLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: "/aws/apigateway/TorchServeAPI"
+      RetentionInDays: 30
+
+Outputs:
+  ApiEndpoint:
+    Description: "URL for the deployed TorchServe API endpoint."
+    Value:
+      Fn::Sub:
+        - "https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/${DeploymentStage}/"
+        - RestApi: !Ref Api
+          DeploymentStage: !Ref ApiStage
