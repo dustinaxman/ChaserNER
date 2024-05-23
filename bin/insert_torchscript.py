@@ -3,7 +3,7 @@ import argparse
 import json
 import torch
 from transformers import DebertaTokenizerFast
-from chaserner.model import NERModel
+from chaserner.model import NERModel, TracingNERModel
 
 EXAMPLE_TEXT = "this is a team effort dustin axman this is really import, please work very hard to finish the report on the operating costs of black mountain economy flies in the rainforest by friday the twenty seventh this is a team effort dustin axman this is really import, please work very hard to finish the report on the operating costs of black mountain economy flies in the rainforest by friday the twenty seventh"
 
@@ -28,6 +28,7 @@ if __name__ == "__main__":
     model = NERModel.load_from_checkpoint(checkpoint_path=model_path, hf_model_name=tokenizer_name, label_to_id=config["lbl2ids"], map_location="cpu", strict=False)
     model.eval()
     model = model.to('cpu')
+    tracing_model = TracingNERModel(model.model)
     tokenized_data = tokenizer(
         [txt.split() for txt in [EXAMPLE_TEXT]*2],
         padding='max_length',
@@ -42,11 +43,13 @@ if __name__ == "__main__":
     if torchscript_model_path.exists():
         print(f"File {torchscript_model_path} already exists. It will be overwritten.")
 
-    with torch.no_grad():
+    with torch.inference_mode():
         #traced_model = model.to_torchscript(method='trace', example_inputs=example_inputs, strict=False)
-        traced_model = torch.jit.trace(model, example_inputs)
+        #traced_model = torch.jit.trace(model.forward_for_tracing, example_inputs)
+        #traced_model = torch.jit.trace_module(model, {"forward_for_tracing": example_inputs})
+        traced_model = torch.jit.trace(tracing_model, example_inputs)
         optimized_model = torch.jit.optimize_for_inference(traced_model)
-        traced_model.save(torchscript_model_path)
+        optimized_model.save(torchscript_model_path)
     config["torchscript_model"] = str(torchscript_model_path.name)
     with open(config_path, "w") as f:
         json.dump(config, f)

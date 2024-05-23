@@ -13,6 +13,13 @@ seqeval_metric = load_metric("seqeval")
 DEFAULT_WORKING_DIR = Path.home()
 
 
+class TracingNERModel(torch.nn.Module):
+    def __init__(self, model):
+        super(TracingNERModel, self).__init__()
+        self.model = model
+    def forward(self, input_ids, attention_mask):
+        return self.model(input_ids, attention_mask=attention_mask).logits
+
 # class DummyNERModel(pl.LightningModule):
 #     def __init__(self, num_labels, learning_rate=2e-5):
 #         super(DummyNERModel, self).__init__()
@@ -97,6 +104,9 @@ class NERModel(pl.LightningModule):
 
     def forward(self, input_ids, attention_mask, labels=None):
         return self.model(input_ids, attention_mask=attention_mask, labels=labels)
+
+    def forward_for_tracing(self, input_ids, attention_mask):
+        return self.model(input_ids, attention_mask=attention_mask)
 
     def training_step(self, batch, batch_idx):
         input_ids = batch['input_ids']

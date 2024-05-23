@@ -59,7 +59,7 @@ def run_ner_model(input_text_list, model, tokenizer, max_length, ids2lbl, device
     total_time = time.time() - start_time
     print(f"TOKENIZER DONE: {total_time}")
     print("RUNNING MODEL")
-    with torch.no_grad():
+    with torch.inference_mode():
         outputs = model(tokenized_data["input_ids"], tokenized_data["attention_mask"])
     total_time = time.time() - start_time
     print(f"MODEL DONE: {total_time}")
