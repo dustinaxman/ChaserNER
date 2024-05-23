@@ -142,4 +142,5 @@ To spin down the deployed stack:
 
 ```bash
 aws cloudformation delete-stack --stack-name chaser-ner-host
+aws cloudformation delete-stack --stack-name chaser-ner-host-dev
 ```

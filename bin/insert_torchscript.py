@@ -43,8 +43,8 @@ if __name__ == "__main__":
         print(f"File {torchscript_model_path} already exists. It will be overwritten.")
 
     with torch.no_grad():
-        traced_model = model.to_torchscript(method='trace', example_inputs=example_inputs, strict=False)
-        #traced_model = torch.jit.trace(model, example_inputs)
+        #traced_model = model.to_torchscript(method='trace', example_inputs=example_inputs, strict=False)
+        traced_model = torch.jit.trace(model, example_inputs)
         traced_model.save(torchscript_model_path)
     config["torchscript_model"] = str(torchscript_model_path.name)
     with open(config_path, "w") as f:
