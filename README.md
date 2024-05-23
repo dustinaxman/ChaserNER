@@ -77,8 +77,8 @@ ecr_uri="372052397911.dkr.ecr.us-east-1.amazonaws.com"
 docker build -t ${torchserve_image_name} -f ${model_dir}/Dockerfile ${model_dir}/
 docker login -u AWS -p $(aws ecr get-login-password --region us-east-1) ${ecr_uri}
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ecr_uri
-docker tag ${torchserve_image_name} ${ecr_uri}/chaser_ner:latest
-docker push ${ecr_uri}/chaser_ner:latest
+docker tag ${torchserve_image_name} ${ecr_uri}/chaser_ner:${expname}
+docker push ${ecr_uri}/chaser_ner:${expname}
 ```
 
 
@@ -99,6 +99,11 @@ Deploy the cloud formation stack (after deleting the log group if it exists so i
 aws logs delete-log-group --log-group-name "/aws/apigateway/TorchServeAPI"
 aws cloudformation create-stack --stack-name chaser-ner-host --template-body file:///Users/deaxman/Projects/ChaserNER/misc/cloudformation_template.yaml --capabilities CAPABILITY_IAM
 ```
+or for dev
+```bash
+aws logs delete-log-group --log-group-name "/aws/apigateway/TorchServeAPIDev"
+aws cloudformation create-stack --parameters ParameterKey=ImageTag,ParameterValue=${expname} --stack-name chaser-ner-host-dev --template-body file:///Users/deaxman/Projects/ChaserNER/misc/cloudformation_template_dev.yaml --capabilities CAPABILITY_IAM
+```
 
 ### Wait for Stack Deployment
 
@@ -110,10 +115,17 @@ Retrieve the API key and endpoint, then test the API call:
 
 ```bash
 API_ENDPOINT=$(aws cloudformation describe-stacks --stack-name chaser-ner-host --query 'Stacks[0].Outputs[?OutputKey==`ApiEndpoint`].OutputValue' --output text | sed 's/\/$//')
-API_KEY_ID=$(aws apigateway get-api-keys --include-values --query 'items[?name==`MyRestrictedAPIKey`].id' --output text)
+API_KEY_ID=$(aws apigateway get-api-keys --include-values --query 'items[?name==`ProdApiKey`].id' --output text)
 API_KEY_VALUE=$(aws apigateway get-api-key --api-key $API_KEY_ID --include-value --query 'value' --output text)
-echo "API KEY: ${API_KEY_VALUE}"
-echo "API ENDPOINT: ${API_ENDPOINT}"
+echo "API KEY PROD: ${API_KEY_VALUE}"
+echo "API ENDPOINT PROD: ${API_ENDPOINT}"
+
+API_ENDPOINT_DEV=$(aws cloudformation describe-stacks --stack-name chaser-ner-host-dev --query 'Stacks[0].Outputs[?OutputKey==`ApiEndpoint`].OutputValue' --output text | sed 's/\/$//')
+API_KEY_ID_DEV=$(aws apigateway get-api-keys --include-values --query 'items[?name==`DevApiKey`].id' --output text)
+API_KEY_VALUE_DEV=$(aws apigateway get-api-key --api-key $API_KEY_ID --include-value --query 'value' --output text)
+echo "API KEY DEV: ${API_KEY_VALUE_DEV}"
+echo "API ENDPOINT DEV: ${API_ENDPOINT_DEV}"
+
 
 curl -X POST ${API_ENDPOINT} -H "Content-Type: application/json" -H "x-api-key: ${API_KEY_VALUE}" -d '{"text": "Design new logo due Tuesday"}'
 ```

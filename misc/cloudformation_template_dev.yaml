@@ -1,7 +1,13 @@
+Parameters:
+  ImageTag:
+    Description: "Tag of the Docker image to pull and run"
+    Type: String
+    Default: "latest"
+
 Resources:
   EC2Instance:
     Type: AWS::EC2::Instance
-    DependsOn: [InternetGateway, GatewayAttachment, RouteTable, Route, InstanceSecurityGroup, SubnetA]
+    DependsOn: [InternetGateway, GatewayAttachment, RouteTable, Route, InstanceSecurityGroup, DevSubnetA]
     Properties:
       InstanceType: t4g.medium
       ImageId: ami-0b9ce70cf1bc24fc3
@@ -14,7 +20,7 @@ Resources:
       IamInstanceProfile: !Ref EC2InstanceProfile
       SecurityGroupIds:
         - !Ref InstanceSecurityGroup
-      SubnetId: !Ref SubnetA
+      SubnetId: !Ref DevSubnetA
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
@@ -23,8 +29,8 @@ Resources:
           service docker start
           usermod -a -G docker ec2-user
           aws ecr get-login-password --region ${AWS::Region} | docker login --username AWS --password-stdin 372052397911.dkr.ecr.us-east-1.amazonaws.com
-          docker pull 372052397911.dkr.ecr.us-east-1.amazonaws.com/chaser_ner:dev
-          docker run -d -p 8080:8080 -p 8081:8081 372052397911.dkr.ecr.us-east-1.amazonaws.com/chaser_ner:dev
+          docker pull 372052397911.dkr.ecr.us-east-1.amazonaws.com/chaser_ner:${ImageTag}
+          docker run -d -p 8080:8080 -p 8081:8081 372052397911.dkr.ecr.us-east-1.amazonaws.com/chaser_ner:${ImageTag}
       KeyName: main
 
   InstanceSecurityGroup:
@@ -125,7 +131,7 @@ Resources:
   Api:
     Type: "AWS::ApiGateway::RestApi"
     Properties:
-      Name: "TorchServeAPI"
+      Name: "TorchServeAPIDev"
       Description: "API for TorchServe"
       FailOnWarnings: "true"
 
@@ -166,7 +172,8 @@ Resources:
     Properties:
       Description: "API Key for restricted access"
       Enabled: "true"
-      Name: "MyRestrictedAPIKey"
+      Name: "DevApiKey"
+      Value: "chaser_ner_api_key_dev"
       StageKeys:
         - RestApiId: !Ref Api
           StageName: !Ref ApiStage
@@ -180,11 +187,11 @@ Resources:
         Stage: !Ref ApiStage
       Description: "Usage plan for our API"
       Quota:
-        Limit: 5000
+        Limit: 500000
         Period: "MONTH"
       Throttle:
-        BurstLimit: 1000
-        RateLimit: 500
+        BurstLimit: 100000
+        RateLimit: 500000
 
   UsagePlanKey:
     Type: "AWS::ApiGateway::UsagePlanKey"
@@ -201,42 +208,42 @@ Resources:
       EnableDnsHostnames: true
 
   # Subnets
-  SubnetA:
+  DevSubnetA:
     Type: "AWS::EC2::Subnet"
     Properties:
       VpcId: !Ref MyVPC
       CidrBlock: "172.31.0.0/20"
       AvailabilityZone: "us-east-1b"
       MapPublicIpOnLaunch: true
-  SubnetB:
+  DevSubnetB:
     Type: "AWS::EC2::Subnet"
     Properties:
       VpcId: !Ref MyVPC
       CidrBlock: "172.31.80.0/20"
       AvailabilityZone: "us-east-1c"
       MapPublicIpOnLaunch: true
-  SubnetC:
+  DevSubnetC:
     Type: "AWS::EC2::Subnet"
     Properties:
       VpcId: !Ref MyVPC
       CidrBlock: "172.31.48.0/20"
       AvailabilityZone: "us-east-1e"
       MapPublicIpOnLaunch: true
-  SubnetD:
+  DevSubnetD:
     Type: "AWS::EC2::Subnet"
     Properties:
       VpcId: !Ref MyVPC
       CidrBlock: "172.31.64.0/20"
       AvailabilityZone: "us-east-1f"
       MapPublicIpOnLaunch: true
-  SubnetE:
+  DevSubnetE:
     Type: "AWS::EC2::Subnet"
     Properties:
       VpcId: !Ref MyVPC
       CidrBlock: "172.31.16.0/20"
       AvailabilityZone: "us-east-1d"
       MapPublicIpOnLaunch: true
-  SubnetF:
+  DevSubnetF:
     Type: "AWS::EC2::Subnet"
     Properties:
       VpcId: !Ref MyVPC
@@ -268,51 +275,51 @@ Resources:
 
   SubnetRouteTableAssociationA:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
-    DependsOn: [SubnetA, RouteTable]
+    DependsOn: [DevSubnetA, RouteTable]
     Properties:
-      SubnetId: !Ref SubnetA
+      SubnetId: !Ref DevSubnetA
       RouteTableId: !Ref RouteTable
 
   SubnetRouteTableAssociationB:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
-    DependsOn: [SubnetB, RouteTable]
+    DependsOn: [DevSubnetB, RouteTable]
     Properties:
-      SubnetId: !Ref SubnetB
+      SubnetId: !Ref DevSubnetB
       RouteTableId: !Ref RouteTable
 
   SubnetRouteTableAssociationC:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
-    DependsOn: [SubnetC, RouteTable]
+    DependsOn: [DevSubnetC, RouteTable]
     Properties:
-      SubnetId: !Ref SubnetC
+      SubnetId: !Ref DevSubnetC
       RouteTableId: !Ref RouteTable
 
   SubnetRouteTableAssociationD:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
-    DependsOn: [SubnetD, RouteTable]
+    DependsOn: [DevSubnetD, RouteTable]
     Properties:
-      SubnetId: !Ref SubnetD
+      SubnetId: !Ref DevSubnetD
       RouteTableId: !Ref RouteTable
 
   SubnetRouteTableAssociationE:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
-    DependsOn: [SubnetE, RouteTable]
+    DependsOn: [DevSubnetE, RouteTable]
     Properties:
-      SubnetId: !Ref SubnetE
+      SubnetId: !Ref DevSubnetE
       RouteTableId: !Ref RouteTable
 
   SubnetRouteTableAssociationF:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
-    DependsOn: [SubnetF, RouteTable]
+    DependsOn: [DevSubnetF, RouteTable]
     Properties:
-      SubnetId: !Ref SubnetF
+      SubnetId: !Ref DevSubnetF
       RouteTableId: !Ref RouteTable
 
   CloudWatchLogGroup:
     Type: "AWS::Logs::LogGroup"
     DeletionPolicy: Retain
     Properties:
-      LogGroupName: "/aws/apigateway/TorchServeAPI"
+      LogGroupName: "/aws/apigateway/TorchServeAPIDev"
       RetentionInDays: 30
 
 Outputs:

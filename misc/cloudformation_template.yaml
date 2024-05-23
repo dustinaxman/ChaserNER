@@ -1,3 +1,9 @@
+Parameters:
+  ImageTag:
+    Description: "Tag of the Docker image to pull and run"
+    Type: String
+    Default: "latest"
+
 Resources:
   EC2Instance:
     Type: AWS::EC2::Instance
@@ -23,8 +29,8 @@ Resources:
           service docker start
           usermod -a -G docker ec2-user
           aws ecr get-login-password --region ${AWS::Region} | docker login --username AWS --password-stdin 372052397911.dkr.ecr.us-east-1.amazonaws.com
-          docker pull 372052397911.dkr.ecr.us-east-1.amazonaws.com/chaser_ner:latest
-          docker run -d -p 8080:8080 -p 8081:8081 372052397911.dkr.ecr.us-east-1.amazonaws.com/chaser_ner:latest
+          docker pull 372052397911.dkr.ecr.us-east-1.amazonaws.com/chaser_ner:${ImageTag}
+          docker run -d -p 8080:8080 -p 8081:8081 372052397911.dkr.ecr.us-east-1.amazonaws.com/chaser_ner:${ImageTag}
       KeyName: main
 
   InstanceSecurityGroup:
@@ -166,7 +172,8 @@ Resources:
     Properties:
       Description: "API Key for restricted access"
       Enabled: "true"
-      Name: "MyRestrictedAPIKey"
+      Name: "ProdApiKey"
+      Value: "chaser_ner_api_key_prod"
       StageKeys:
         - RestApiId: !Ref Api
           StageName: !Ref ApiStage
@@ -180,11 +187,11 @@ Resources:
         Stage: !Ref ApiStage
       Description: "Usage plan for our API"
       Quota:
-        Limit: 5000
+        Limit: 500000
         Period: "MONTH"
       Throttle:
-        BurstLimit: 1000
-        RateLimit: 500
+        BurstLimit: 100000
+        RateLimit: 500000
 
   UsagePlanKey:
     Type: "AWS::ApiGateway::UsagePlanKey"
