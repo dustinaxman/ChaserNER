@@ -45,6 +45,7 @@ if __name__ == "__main__":
     with torch.no_grad():
         #traced_model = model.to_torchscript(method='trace', example_inputs=example_inputs, strict=False)
         traced_model = torch.jit.trace(model, example_inputs)
+        optimized_model = torch.jit.optimize_for_inference(traced_model)
         traced_model.save(torchscript_model_path)
     config["torchscript_model"] = str(torchscript_model_path.name)
     with open(config_path, "w") as f:
