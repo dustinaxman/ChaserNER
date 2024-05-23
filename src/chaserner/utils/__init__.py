@@ -154,8 +154,13 @@ def join_raw_labels(raw_labels, offset_mapping):
 
 
 def get_perplexity(outputs, ids2lbl):
-    log_probs = F.log_softmax(outputs["logits"], dim=-1)
-    raw_labels = torch.argmax(outputs["logits"], dim=-1)
+    if isinstance(outputs, dict):
+        logits = outputs["logits"]
+    else:
+        logits = outputs
+    log_probs = F.log_softmax(logits, dim=-1)
+    raw_labels = torch.argmax(logits, dim=-1)
+
     label_log_probs = log_probs.gather(dim=-1, index=raw_labels.unsqueeze(-1)).squeeze(-1)
     unique_labels = raw_labels.unique()
     perplexities = {}
@@ -171,7 +176,10 @@ def get_perplexity(outputs, ids2lbl):
 
 
 def model_output_to_label_tensor(outputs, offset_mapping, ids2lbl):
-    raw_labels = torch.argmax(outputs["logits"], dim=-1)
+    if isinstance(outputs, dict):
+        raw_labels = torch.argmax(outputs["logits"], dim=-1)
+    else:
+        raw_labels = torch.argmax(outputs, dim=-1)
     selected_values_list = join_raw_labels(raw_labels, offset_mapping)
     labels_list = [[ids2lbl[idx.item()] for idx in tensor] for tensor in selected_values_list]
     return labels_list
@@ -218,7 +226,10 @@ def batch_to_info(batch, tokenizer, ids2lbl, outputs=None) -> List[str]:
 
     if outputs is not None:
         # log_probs_all_samples = F.log_softmax(outputs["logits"], dim=-1).cpu().numpy().astype(float).tolist()
-        logits = outputs["logits"]
+        if isinstance(outputs, dict):
+            logits = outputs["logits"]
+        else:
+            logits = outputs
         all_predicted_classes = torch.argmax(logits, dim=-1)
         log_probs_all_samples = [None for i in tok_texts]
     else:

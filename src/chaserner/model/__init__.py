@@ -18,7 +18,7 @@ class TracingNERModel(torch.nn.Module):
         super(TracingNERModel, self).__init__()
         self.model = model
     def forward(self, input_ids, attention_mask):
-        return self.model(input_ids, attention_mask=attention_mask)
+        return self.model(input_ids, attention_mask=attention_mask).logits
 
 # class DummyNERModel(pl.LightningModule):
 #     def __init__(self, num_labels, learning_rate=2e-5):
