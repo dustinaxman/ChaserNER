@@ -1,5 +1,5 @@
 config:
-  target: 'https://xd04d47wz1.execute-api.us-east-1.amazonaws.com/dev'
+  target: 'https://dov0msbhg6.execute-api.us-east-1.amazonaws.com/dev'
   phases:
     - duration: 600
       arrivalRate: 5

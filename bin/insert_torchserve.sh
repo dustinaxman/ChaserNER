@@ -2,9 +2,26 @@
 
 model_dir=$1
 model_dir="${model_dir%/}"
-model_file_path=${model_dir}/$(cat ${model_dir}/config.json | jq -r '.["torchscript_model"]')
+#model_file_path=${model_dir}/$(cat ${model_dir}/config.json | jq -r '.["torchscript_model"]')
 #model_file_path=${model_dir}/$(cat ${model_dir}/config.json | jq -r '.["best_checkpoint"]')
 
+
+# Path to the config file
+config_file_path="${model_dir}/config.json"
+
+# Get the model_file_path based on the existence of the keys
+if model_file_path=$(jq -r 'if has("torchscript_model") then .torchscript_model else empty end' "${config_file_path}"); then
+    echo "Using torchscript_model key"
+else
+    model_file_path=$(jq -r '.best_checkpoint' "${config_file_path}")
+    echo "Using best_checkpoint key"
+fi
+
+# Prepend the directory path to the model_file_path
+model_file_path="${model_dir}/${model_file_path}"
+
+# Print the resulting path
+echo "Model file path: ${model_file_path}"
 
 #zip -r ${model_dir}/chaser_extras.zip /Users/deaxman/Projects/ChaserNER/src/chaserner
 #export PATH="/opt/homebrew/bin:$PATH"
