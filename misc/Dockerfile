@@ -31,14 +31,14 @@ EXPOSE 8080
 #RUN pip install torchserve==0.6.0
 #RUN pip install torchmetrics=1.1.0
 
-#RUN pip install transformers
-USER root
-RUN apt-get update && apt-get install -y git
-RUN cd /workspace && git clone https://github.com/huggingface/transformers.git
+RUN pip install transformers
+#USER root
+#RUN apt-get update && apt-get install -y git
+#RUN cd /workspace && git clone https://github.com/huggingface/transformers.git
 
-RUN cd /workspace/transformers && git fetch origin pull/27734/head:fix-export-deberta-to-torchscript
-RUN cd /workspace/transformers && git checkout fix-export-deberta-to-torchscript
-RUN cd /workspace/transformers && pip install -e .
+#RUN cd /workspace/transformers && git fetch origin pull/27734/head:fix-export-deberta-to-torchscript
+#RUN cd /workspace/transformers && git checkout fix-export-deberta-to-torchscript
+#RUN cd /workspace/transformers && pip install -e .
 
 RUN pip install pytorch_lightning
 RUN pip install datasets
