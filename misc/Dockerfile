@@ -40,9 +40,10 @@ RUN pip install transformers
 #RUN cd /workspace/transformers && git checkout fix-export-deberta-to-torchscript
 #RUN cd /workspace/transformers && pip install -e .
 
-RUN pip install pytorch_lightning
-RUN pip install datasets
+RUN pip install pytorch_lightning==2.1.3
+RUN pip install datasets==2.16.1
 RUN pip install seqeval
+RUN pip install torch==1.12.0
 
 #RUN ls -la /workspace/ChaserNER/src/
 #RUN ls -la /workspace/ChaserNER/src/chaserner/
