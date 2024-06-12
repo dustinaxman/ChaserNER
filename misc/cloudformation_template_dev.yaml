@@ -3,6 +3,10 @@ Parameters:
     Description: "Tag of the Docker image to pull and run"
     Type: String
     Default: "latest"
+  ChaserAPIKey:
+    Description: "secret key for the api"
+    Type: String
+    Default: "chaser_ner_api_key"
 
 Resources:
   EC2Instance:
@@ -173,7 +177,7 @@ Resources:
       Description: "API Key for restricted access"
       Enabled: "true"
       Name: "DevApiKey"
-      Value: "chaser_ner_api_key_dev"
+      Value: ${ChaserAPIKey}
       StageKeys:
         - RestApiId: !Ref Api
           StageName: !Ref ApiStage

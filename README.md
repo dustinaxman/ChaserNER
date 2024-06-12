@@ -97,12 +97,12 @@ Deploy the cloud formation stack (after deleting the log group if it exists so i
 
 ```bash
 aws logs delete-log-group --log-group-name "/aws/apigateway/TorchServeAPI"
-aws cloudformation create-stack --stack-name chaser-ner-host --template-body file:///Users/deaxman/Projects/ChaserNER/misc/cloudformation_template.yaml --capabilities CAPABILITY_IAM
+aws cloudformation create-stack --parameters ParameterKey=ImageTag,ParameterValue=${expname} ParameterKey=ChaserAPIKey,ParameterValue= --stack-name chaser-ner-host --template-body file:///Users/deaxman/Projects/ChaserNER/misc/cloudformation_template.yaml --capabilities CAPABILITY_IAM
 ```
 or for dev
 ```bash
 aws logs delete-log-group --log-group-name "/aws/apigateway/TorchServeAPIDev"
-aws cloudformation create-stack --parameters ParameterKey=ImageTag,ParameterValue=${expname} --stack-name chaser-ner-host-dev --template-body file:///Users/deaxman/Projects/ChaserNER/misc/cloudformation_template_dev.yaml --capabilities CAPABILITY_IAM
+aws cloudformation create-stack --parameters ParameterKey=ImageTag,ParameterValue=${expname} ParameterKey=ChaserAPIKey,ParameterValue= --stack-name chaser-ner-host-dev --template-body file:///Users/deaxman/Projects/ChaserNER/misc/cloudformation_template_dev.yaml --capabilities CAPABILITY_IAM
 ```
 
 ### Wait for Stack Deployment
