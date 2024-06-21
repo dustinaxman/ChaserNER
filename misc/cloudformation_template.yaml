@@ -6,7 +6,7 @@ Parameters:
   ChaserAPIKey:
     Description: "secret key for the api"
     Type: String
-    Default: "chaser_ner_api_key"
+    Default: "chaser_ner_api_secret_key"
 
 Resources:
   EC2Instance:
