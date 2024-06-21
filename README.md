@@ -68,9 +68,7 @@ model_dir=${WORKING_DIR}/${expname}_model
 model_dir="${model_dir%/}"
 torchserve_image_name=${expname}_image
 aws s3 cp --recursive s3://chaser-models/${expname}/ ${model_dir}/
-# commented out for deberta which doesn't yet support torchscript
-# when it supports, also change "insert_torchserve.sh" file to use "torchscript_model"
-# /opt/homebrew/bin/python3 ~/Projects/ChaserNER/bin/insert_torchscript.py --config_path  ${model_dir}/config.json
+/opt/homebrew/bin/python3 ~/Projects/ChaserNER/bin/insert_torchscript.py --config_path  ${model_dir}/config.json
 ~/Projects/ChaserNER/bin/insert_torchserve.sh ${model_dir}
 
 ecr_uri="372052397911.dkr.ecr.us-east-1.amazonaws.com"
