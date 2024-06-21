@@ -177,7 +177,7 @@ Resources:
       Description: "API Key for restricted access"
       Enabled: "true"
       Name: "DevApiKey"
-      Value: ${ChaserAPIKey}
+      Value: !Ref ChaserAPIKey
       StageKeys:
         - RestApiId: !Ref Api
           StageName: !Ref ApiStage
